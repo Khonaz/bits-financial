@@ -1,0 +1,2074 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BITS Consulting | Financial Dashboard (Local)</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        /* public/style.css */
+
+        /* ------------------------- */
+        /* CSS Variables & Theming   */
+        /* ------------------------- */
+        :root {
+            /* Dark Theme (Default) */
+            --bg-primary: #0D1117;
+            --bg-secondary: rgba(22, 27, 34, 0.8);
+            --bg-tertiary: rgba(33, 38, 45, 0.7);
+            --bg-header: rgba(13, 17, 23, 0.7);
+            --text-primary: #e6edf3;
+            --text-secondary: #7d8590;
+            --accent-primary: #58a6ff;
+            --accent-secondary: #3FB950;
+            --border-color: rgba(240, 246, 252, 0.1);
+            --shadow-color: rgba(0, 0, 0, 0.4);
+            --success: #3FB950;
+            --danger: #F85149;
+            --warning: #D29922;
+            --info: #58a6ff;
+
+            --font-family: 'Inter', sans-serif;
+        }
+
+        body.light-mode {
+            --bg-primary: #ffffff;
+            --bg-secondary: rgba(246, 248, 250, 0.8);
+            --bg-tertiary: rgba(232, 235, 239, 0.7);
+            --bg-header: rgba(255, 255, 255, 0.7);
+            --text-primary: #1f2328;
+            --text-secondary: #656d76;
+            --accent-primary: #0969da;
+            --accent-secondary: #1a7f37;
+            --border-color: rgba(31, 35, 40, 0.15);
+            --shadow-color: rgba(0, 0, 0, 0.1);
+            --success: #1a7f37;
+            --danger: #cf222e;
+            --warning: #9a6700;
+            --info: #0969da;
+        }
+
+        /* ------------------------- */
+        /* Base & Reset Styles       */
+        /* ------------------------- */
+        *, *::before, *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: var(--font-family);
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            transition: background-color 0.3s, color 0.3s;
+            font-size: 16px;
+            line-height: 1.6;
+        }
+
+        h1, h2, h3, h4, h5, h6 {
+            color: var(--text-primary);
+            font-weight: 600;
+            line-height: 1.2;
+            letter-spacing: -0.5px;
+        }
+
+        a {
+            color: var(--accent-secondary);
+            text-decoration: none;
+        }
+
+        ul {
+            list-style: none;
+        }
+
+        /* ------------------------- */
+        /* Loading Overlay           */
+        /* ------------------------- */
+        #loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: var(--bg-primary);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 10000;
+            transition: opacity 0.5s ease-out;
+        }
+
+        #loading-overlay.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid var(--border-color);
+            border-top: 5px solid var(--accent-primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* ------------------------- */
+        /* Main Layout               */
+        /* ------------------------- */
+        .app-container {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            width: 260px;
+            background-color: var(--bg-secondary);
+            backdrop-filter: blur(10px);
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            border-right: 1px solid var(--border-color);
+            transition: width 0.3s, background-color 0.3s;
+        }
+
+        .sidebar-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 2.5rem;
+        }
+
+        .sidebar-header .logo {
+            margin-right: 1rem;
+            width: 40px;
+            height: 40px;
+        }
+
+        .sidebar-header h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        .sidebar-nav {
+            flex-grow: 1;
+        }
+
+        .nav-link {
+            display: flex;
+            align-items: center;
+            padding: 0.8rem 1rem;
+            margin-bottom: 0.5rem;
+            border-radius: 8px;
+            color: var(--text-secondary);
+            font-weight: 500;
+            transition: background-color 0.2s, color 0.2s, box-shadow 0.2s, transform 0.2s;
+        }
+
+        .nav-link i {
+            margin-right: 1rem;
+            width: 20px;
+            height: 20px;
+        }
+
+        .nav-link:hover {
+            background-color: var(--bg-tertiary);
+            color: var(--text-primary);
+            transform: translateX(5px);
+        }
+
+        .nav-link.active {
+            background-color: var(--accent-primary);
+            color: #fff;
+            font-weight: 600;
+            box-shadow: 0 0 15px rgba(88, 166, 255, 0.3);
+        }
+
+        .sidebar-footer {
+            margin-top: auto;
+        }
+
+        .theme-switcher {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+            background-color: var(--bg-tertiary);
+            border-radius: 8px;
+            margin-bottom: 1rem;
+        }
+        .theme-switcher i {
+            color: var(--text-secondary);
+        }
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 40px;
+            height: 20px;
+            margin: 0 0.5rem;
+        }
+        .switch input { display: none; }
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: var(--bg-primary);
+            transition: .4s;
+        }
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 14px; width: 14px;
+            left: 3px; bottom: 3px;
+            background-color: white;
+            transition: .4s;
+        }
+        input:checked + .slider { background-color: var(--accent-secondary); }
+        input:checked + .slider:before { transform: translateX(20px); }
+        .slider.round { border-radius: 20px; }
+        .slider.round:before { border-radius: 50%; }
+
+        .user-info {
+            text-align: center;
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+        #user-id-display {
+            word-break: break-all;
+            font-family: monospace;
+            font-size: 0.8rem;
+            background-color: var(--bg-tertiary);
+            padding: 2px 4px;
+            border-radius: 4px;
+            display: inline-block;
+            margin-top: 4px;
+        }
+
+        .main-content {
+            flex-grow: 1;
+            padding: 2rem;
+            padding-bottom: 80px; /* Space for mobile nav */
+            overflow-y: auto;
+        }
+
+        .main-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            position: sticky;
+            top: 0;
+            background: var(--bg-header);
+            backdrop-filter: blur(10px);
+            padding: 1rem 2rem;
+            margin: -2rem -2rem 2rem -2rem;
+            z-index: 100;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        #page-title {
+            font-size: 2rem;
+            font-weight: 800;
+        }
+
+        .mobile-nav {
+            display: none;
+        }
+
+        /* ------------------------- */
+        /* Components                */
+        /* ------------------------- */
+
+        /* Buttons */
+        .btn {
+            padding: 0.6rem 1.2rem;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .btn-primary {
+            background-color: var(--accent-primary);
+            color: #fff;
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 15px rgba(88, 166, 255, 0.2);
+        }
+        .btn-primary:hover:not(:disabled) {
+            background-color: #79b8ff;
+            border-color: #79b8ff;
+            transform: translateY(-2px);
+        }
+        .btn-secondary {
+            background-color: var(--bg-tertiary);
+            color: var(--text-primary);
+        }
+        .btn-secondary:hover:not(:disabled) {
+            background-color: var(--border-color);
+        }
+        .btn-danger {
+            background-color: var(--danger);
+            color: #fff;
+            border-color: var(--danger);
+        }
+        .btn-success {
+            background-color: var(--success);
+            color: #fff;
+            border-color: var(--success);
+        }
+
+
+        /* KPI Cards */
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        .kpi-card {
+            background-color: var(--bg-secondary);
+            backdrop-filter: blur(10px);
+            padding: 1.5rem;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 8px 32px 0 var(--shadow-color);
+            animation: fadeIn 0.5s ease-out forwards;
+        }
+        .kpi-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 0.5rem;
+        }
+        .kpi-card-header h3 {
+            font-size: 1rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+        }
+        .kpi-card-header .icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .kpi-card-header .icon i {
+            width: 20px;
+            height: 20px;
+        }
+        .kpi-icon-revenue { background-color: rgba(63, 185, 80, 0.1); color: var(--success); }
+        .kpi-icon-costs { background-color: rgba(248, 81, 73, 0.1); color: var(--danger); }
+        .kpi-icon-profit { background-color: rgba(88, 166, 255, 0.1); color: var(--info); }
+        .kpi-icon-projects { background-color: rgba(210, 153, 34, 0.1); color: var(--warning); }
+
+        .kpi-value {
+            font-size: 2.25rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+        .kpi-footer {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+
+        /* Charts */
+        .chart-container {
+            background-color: var(--bg-secondary);
+            backdrop-filter: blur(10px);
+            padding: 1.5rem;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            margin-bottom: 2rem;
+            box-shadow: 0 8px 32px 0 var(--shadow-color);
+        }
+        .chart-container h3 {
+            margin-bottom: 1.5rem;
+            font-size: 1.25rem;
+        }
+        .chart-wrapper {
+            position: relative;
+            height: 400px;
+        }
+        .doughnut-chart-wrapper {
+            position: relative;
+            height: 300px;
+            max-width: 300px;
+            margin: 0 auto;
+        }
+
+        /* Tables */
+        .table-container {
+            background-color: var(--bg-secondary);
+            backdrop-filter: blur(10px);
+            padding: 1rem;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            overflow-x: auto;
+        }
+        .custom-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .custom-table th, .custom-table td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .custom-table thead th {
+            font-weight: 600;
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+            text-transform: uppercase;
+        }
+        .custom-table tbody tr {
+            transition: background-color 0.2s;
+        }
+        .custom-table tbody tr:last-child td {
+            border-bottom: none;
+        }
+        .custom-table tbody tr:hover {
+            background-color: var(--bg-tertiary);
+        }
+        .custom-table tbody tr td {
+            vertical-align: middle;
+        }
+        .custom-table .clickable-row {
+            cursor: pointer;
+        }
+
+        /* Status Badges */
+        .status-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: capitalize;
+            display: inline-block;
+        }
+        .status-planning { background-color: rgba(88, 166, 255, 0.2); color: var(--info); }
+        .status-in-progress { background-color: rgba(210, 153, 34, 0.2); color: var(--warning); }
+        .status-completed { background-color: rgba(63, 185, 80, 0.2); color: var(--success); }
+        .status-on-hold { background-color: rgba(125, 133, 144, 0.2); color: var(--text-secondary); }
+
+        /* Forms & Controls */
+        .form-group {
+            margin-bottom: 1rem;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+        }
+        .form-control {
+            width: 100%;
+            padding: 0.75rem;
+            background-color: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-size: 1rem;
+        }
+        .form-control:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 0 3px rgba(88, 166, 255, 0.3);
+        }
+        select.form-control {
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23adb5bd' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3e%3c/svg%3e");
+            background-repeat: no-repeat;
+            background-position: right 0.75rem center;
+            background-size: 16px 12px;
+        }
+        .filter-controls {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        /* ------------------------- */
+        /* Modal Styles              */
+        /* ------------------------- */
+        .modal-container-visible {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            opacity: 1;
+            transition: opacity 0.3s;
+        }
+        .modal-container-hidden {
+            display: none;
+            opacity: 0;
+        }
+        .modal-content {
+            background-color: var(--bg-secondary);
+            backdrop-filter: blur(10px);
+            padding: 2rem;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 800px;
+            max-height: 90vh;
+            overflow-y: auto;
+            transform: scale(0.95);
+            transition: transform 0.3s;
+            display: flex;
+            flex-direction: column;
+            border: 1px solid var(--border-color);
+        }
+        .modal-container-visible .modal-content {
+            transform: scale(1);
+        }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 1rem;
+            flex-shrink: 0;
+        }
+        .modal-header h3 {
+            font-size: 1.5rem;
+        }
+        .close-modal-btn {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+        }
+        .close-modal-btn:hover {
+            color: var(--text-primary);
+        }
+        .modal-body {
+            flex-grow: 1;
+            overflow-y: auto; /* Allows scrolling within the modal body if content overflows */
+        }
+        .modal-footer {
+            margin-top: 1.5rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            justify-content: flex-end;
+            gap: 1rem;
+            flex-shrink: 0;
+        }
+
+        /* Modal Tabs */
+        .modal-tabs {
+            display: flex;
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 1.5rem;
+        }
+        .tab-link {
+            padding: 0.75rem 1.5rem;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+        .tab-link.active {
+            color: var(--accent-primary);
+            border-bottom-color: var(--accent-primary);
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        .sub-section {
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-color);
+        }
+        .sub-section:first-child {
+            margin-top: 0;
+            padding-top: 0;
+            border-top: none;
+        }
+        .sub-section h4 {
+            margin-bottom: 1rem;
+        }
+        
+        /* ------------------------- */
+        /* Calendar Styles           */
+        /* ------------------------- */
+        .calendar-container {
+            background-color: var(--bg-secondary);
+            backdrop-filter: blur(10px);
+            padding: 1.5rem;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+        }
+        .calendar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+        #month-year {
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 1px;
+            background-color: var(--border-color);
+            border: 1px solid var(--border-color);
+        }
+        .calendar-day, .calendar-day-header {
+            background-color: var(--bg-primary);
+            padding: 0.5rem;
+        }
+        .calendar-day-header {
+            text-align: center;
+            font-weight: 600;
+            color: var(--text-secondary);
+            background-color: var(--bg-tertiary);
+        }
+        .calendar-day {
+            min-height: 120px;
+            display: flex;
+            flex-direction: column;
+        }
+        .day-number {
+            font-weight: 600;
+        }
+        .calendar-day.other-month .day-number {
+            color: var(--text-secondary);
+            opacity: 0.5;
+        }
+        .calendar-events {
+            margin-top: 0.5rem;
+            flex-grow: 1;
+            overflow-y: auto;
+        }
+        .calendar-event {
+            font-size: 0.75rem;
+            padding: 2px 5px;
+            border-radius: 4px;
+            margin-bottom: 3px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .event-revenue {
+            background-color: rgba(63, 185, 80, 0.2);
+            color: var(--success);
+        }
+        .event-expense {
+            background-color: rgba(248, 81, 73, 0.2);
+            color: var(--danger);
+        }
+
+
+        /* ------------------------- */
+        /* Responsive Design         */
+        /* ------------------------- */
+        @media (max-width: 1024px) {
+            .sidebar {
+                position: fixed;
+                left: -260px;
+                z-index: 1100;
+                height: 100%;
+                transition: left 0.3s;
+            }
+            .sidebar.open {
+                left: 0;
+            }
+            .main-content {
+                padding: 1rem;
+                padding-bottom: 80px;
+            }
+             .main-header {
+                padding: 1rem;
+                margin: -1rem -1rem 1.5rem -1rem;
+            }
+            #page-title {
+                font-size: 1.5rem;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                display: none;
+            }
+            .main-content {
+                width: 100%;
+            }
+            .mobile-nav {
+                position: fixed;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                height: 65px;
+                background-color: var(--bg-secondary);
+                backdrop-filter: blur(10px);
+                border-top: 1px solid var(--border-color);
+                display: flex;
+                justify-content: space-around;
+                align-items: center;
+                z-index: 1000;
+            }
+            .mobile-nav-link {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                color: var(--text-secondary);
+                font-size: 0.7rem;
+            }
+            .mobile-nav-link i {
+                width: 24px;
+                height: 24px;
+                margin-bottom: 4px;
+            }
+            .mobile-nav-link.active {
+                color: var(--accent-primary);
+            }
+
+            .kpi-grid {
+                grid-template-columns: 1fr;
+            }
+            .main-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 1rem;
+            }
+            .modal-content {
+                width: 95%;
+                padding: 1.5rem;
+                max-width: 95%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="loading-overlay">
+        <div class="spinner"></div>
+        <p>Initializing BITS Dashboard...</p>
+    </div>
+
+    <div class="app-container">
+        <!-- Sidebar Navigation (Desktop) -->
+        <nav class="sidebar">
+            <div class="sidebar-header">
+                <img src="http://googleusercontent.com/file_content/19" alt="BITS Logo" class="logo">
+                <h1>BITS Consulting</h1>
+            </div>
+            <ul class="sidebar-nav">
+                <li><a href="#dashboard" class="nav-link active" data-page="dashboard"><i data-lucide="layout-dashboard"></i><span>Dashboard</span></a></li>
+                <li><a href="#portfolio" class="nav-link" data-page="portfolio"><i data-lucide="briefcase"></i><span>Portfolio</span></a></li>
+                <li><a href="#revenue" class="nav-link" data-page="revenue"><i data-lucide="trending-up"></i><span>Revenue</span></a></li>
+                <li><a href="#expenses" class="nav-link" data-page="expenses"><i data-lucide="trending-down"></i><span>Expenses</span></a></li>
+                <li><a href="#profit" class="nav-link" data-page="profit"><i data-lucide="dollar-sign"></i><span>Profitability</span></a></li>
+                <li><a href="#trends" class="nav-link" data-page="trends"><i data-lucide="bar-chart-3"></i><span>Trends</span></a></li>
+                <li><a href="#calendar" class="nav-link" data-page="calendar"><i data-lucide="calendar"></i><span>Calendar</span></a></li>
+                <li><a href="#team" class="nav-link" data-page="team"><i data-lucide="users"></i><span>Team</span></a></li>
+                <li><a href="#reports" class="nav-link" data-page="reports"><i data-lucide="file-text"></i><span>Reports</span></a></li>
+            </ul>
+            <div class="sidebar-footer">
+                <div class="theme-switcher">
+                    <i data-lucide="sun"></i>
+                    <label class="switch">
+                        <input type="checkbox" id="theme-toggle-desktop">
+                        <span class="slider round"></span>
+                    </label>
+                    <i data-lucide="moon"></i>
+                </div>
+                <div class="user-info">
+                    <p>User ID:</p>
+                    <span id="user-id-display">Local Mode</span>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <header class="main-header">
+                <h2 id="page-title">Dashboard</h2>
+                <button id="add-project-btn" class="btn btn-primary"><i data-lucide="plus"></i> Add Project</button>
+            </header>
+            <div id="app-content">
+                <!-- Dynamic content will be rendered here -->
+            </div>
+        </main>
+
+        <!-- Bottom Navigation (Mobile) -->
+        <nav class="mobile-nav">
+            <a href="#dashboard" class="mobile-nav-link active" data-page="dashboard"><i data-lucide="layout-dashboard"></i><span>Dashboard</span></a>
+            <a href="#portfolio" class="mobile-nav-link" data-page="portfolio"><i data-lucide="briefcase"></i><span>Portfolio</span></a>
+            <a href="#revenue" class="mobile-nav-link" data-page="revenue"><i data-lucide="trending-up"></i><span>Revenue</span></a>
+            <a href="#expenses" class="mobile-nav-link" data-page="expenses"><i data-lucide="trending-down"></i><span>Expenses</span></a>
+            <a href="#calendar" class="mobile-nav-link" data-page="calendar"><i data-lucide="calendar"></i><span>Calendar</span></a>
+            <a href="#team" class="mobile-nav-link" data-page="team"><i data-lucide="users"></i><span>Team</span></a>
+        </nav>
+    </div>
+
+    <!-- Modal Container -->
+    <div id="modal-container" class="modal-container-hidden"></div>
+    
+    <!-- External Libraries -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <!-- Main Application Script -->
+    <script type="module">
+        // This script contains the entire application, refactored to run locally
+        // without any external file dependencies or a backend connection.
+
+        // --- Global Application Object ---
+        const App = {};
+
+        // --- Module: Local Data Service ---
+        App.dataService = (() => {
+            const SEED_DATA_SOURCE = [
+                { id: "proj1", name: "InnovateX Platform", client: "Tech Solutions Inc.", projectLead: "Alice Johnson", totalContractValue: 150000, status: "in-progress", paymentFrequency: "monthly", createdAt: new Date(new Date().setDate(new Date().getDate() - 90)), expenses: [ { description: "Cloud Hosting (Q1)", amount: 3000, type: "direct", date: new Date(new Date().setDate(new Date().getDate() - 85)) }, { description: "UX/UI Design Services", amount: 12000, type: "outsourced", date: new Date(new Date().setDate(new Date().getDate() - 80)) }, { description: "Software Licenses", amount: 1500, type: "direct", date: new Date(new Date().setDate(new Date().getDate() - 70)) }, { description: "Cloud Hosting (Q2)", amount: 3000, type: "direct", date: new Date(new Date().setDate(new Date().getDate() - 10)) }, ], revenuePayments: [ { description: "Initial Deposit", amount: 30000, date: new Date(new Date().setDate(new Date().getDate() - 88)) }, { description: "Milestone 1 Payment", amount: 45000, date: new Date(new Date().setDate(new Date().getDate() - 55)) }, { description: "Milestone 2 Payment", amount: 45000, date: new Date(new Date().setDate(new Date().getDate() - 20)) }, ] },
+                { id: "proj2", name: "E-Commerce Overhaul", client: "Global Retail Co.", projectLead: "Bob Williams", totalContractValue: 220000, status: "completed", paymentFrequency: "milestone", createdAt: new Date(new Date().setDate(new Date().getDate() - 180)), expenses: [ { description: "Development Team (Internal)", amount: 60000, type: "direct", date: new Date(new Date().setDate(new Date().getDate() - 170)) }, { description: "Payment Gateway Integration", amount: 7500, type: "outsourced", date: new Date(new Date().setDate(new Date().getDate() - 150)) }, { description: "QA Testing Services", amount: 15000, type: "outsourced", date: new Date(new Date().setDate(new Date().getDate() - 100)) }, { description: "Final Deployment Support", amount: 5000, type: "direct", date: new Date(new Date().setDate(new Date().getDate() - 35)) }, ], revenuePayments: [ { description: "Phase 1", amount: 75000, date: new Date(new Date().setDate(new Date().getDate() - 160)) }, { description: "Phase 2", amount: 75000, date: new Date(new Date().setDate(new Date().getDate() - 110)) }, { description: "Final Payment", amount: 70000, date: new Date(new Date().setDate(new Date().getDate() - 30)) }, ] },
+                { id: "proj3", name: "Data Analytics Dashboard", client: "HealthFirst Corp", projectLead: "Charlie Brown", totalContractValue: 85000, status: "in-progress", paymentFrequency: "quarterly", createdAt: new Date(new Date().setDate(new Date().getDate() - 60)), expenses: [ { description: "Data Scientist (Contractor)", amount: 18000, type: "outsourced", date: new Date(new Date().setDate(new Date().getDate() - 50)) }, { description: "Data Visualization Software", amount: 4000, type: "direct", date: new Date(new Date().setDate(new Date().getDate() - 45)) }, ], revenuePayments: [ { description: "Q1 Payment", amount: 42500, date: new Date(new Date().setDate(new Date().getDate() - 58)) }, ] },
+                { id: "proj4", name: "Mobile App Development", client: "Startup Hub", projectLead: "Diana Prince", totalContractValue: 75000, status: "planning", paymentFrequency: "monthly", createdAt: new Date(new Date().setDate(new Date().getDate() - 15)), expenses: [ { description: "Market Research", amount: 2500, type: "direct", date: new Date(new Date().setDate(new Date().getDate() - 10)) }, ], revenuePayments: [ { description: "Initial Retainer", amount: 15000, date: new Date(new Date().setDate(new Date().getDate() - 12)) }, ] },
+                { id: "proj5", name: "Cloud Migration", client: "Legacy Systems Ltd.", projectLead: "Ethan Hunt", totalContractValue: 120000, status: "on-hold", paymentFrequency: "milestone", createdAt: new Date(new Date().setDate(new Date().getDate() - 120)), expenses: [ { description: "Infrastructure Audit", amount: 8000, type: "direct", date: new Date(new Date().setDate(new Date().getDate() - 115)) }, ], revenuePayments: [ { description: "Discovery Phase Payment", amount: 25000, date: new Date(new Date().setDate(new Date().getDate() - 118)) }, ] },
+                { id: "proj6", name: "Project Phoenix", client: "Omni Consumer Products", projectLead: "Frank Murphy", totalContractValue: 500000, status: "in-progress", paymentFrequency: "monthly", createdAt: new Date(new Date().setDate(new Date().getDate() - 250)), expenses: [ { description: "R&D Team Salaries", amount: 150000, type: "direct", date: new Date(new Date().setDate(new Date().getDate() - 240)) }, { description: "Specialized Hardware", amount: 75000, type: "direct", date: new Date(new Date().setDate(new Date().getDate() - 230)) }, { description: "External Security Consultants", amount: 45000, type: "outsourced", date: new Date(new Date().setDate(new Date().getDate() - 200)) }, { description: "Operational Costs (Y1)", amount: 25000, type: "direct", date: new Date(new Date().setDate(new Date().getDate() - 150)) }, ], revenuePayments: [ { description: "Seed Funding", amount: 250000, date: new Date(new Date().setDate(new Date().getDate() - 245)) }, { description: "Milestone Alpha", amount: 125000, date: new Date(new Date().setDate(new Date().getDate() - 180)) }, ] },
+            ];
+
+            let localProjects = JSON.parse(JSON.stringify(SEED_DATA_SOURCE));
+
+            const notifyDataChange = () => {
+                window.dispatchEvent(new CustomEvent('dataChanged', { detail: { projects: getProjects() } }));
+            };
+
+            const getProjects = () => {
+                const projectsWithDates = localProjects.map(p => ({
+                    ...p,
+                    createdAt: new Date(p.createdAt),
+                    expenses: (p.expenses || []).map(e => ({...e, date: new Date(e.date)})),
+                    revenuePayments: (p.revenuePayments || []).map(r => ({...r, date: new Date(r.date)}))
+                }));
+                return projectsWithDates.sort((a, b) => b.createdAt - a.createdAt);
+            };
+
+            const addProject = (projectData) => {
+                const newProject = {
+                    ...projectData,
+                    id: `proj${Date.now()}`,
+                    createdAt: new Date().toISOString(),
+                    expenses: [],
+                    revenuePayments: []
+                };
+                localProjects.unshift(newProject);
+                notifyDataChange();
+            };
+
+            const updateProject = (projectId, dataToUpdate) => {
+                const projectIndex = localProjects.findIndex(p => p.id === projectId);
+                if (projectIndex > -1) {
+                    localProjects[projectIndex] = { ...localProjects[projectIndex], ...dataToUpdate };
+                    notifyDataChange();
+                }
+            };
+            
+            const deleteProject = (projectId) => {
+                localProjects = localProjects.filter(p => p.id !== projectId);
+                notifyDataChange();
+            };
+
+            const seedDatabase = () => {
+                localProjects = JSON.parse(JSON.stringify(SEED_DATA_SOURCE));
+                notifyDataChange();
+            };
+
+            return { getProjects, addProject, updateProject, deleteProject, seedDatabase };
+        })();
+        
+        // --- Module: Helpers ---
+        App.helpers = (() => {
+            let activeCharts = {};
+
+            function formatCurrency(value) {
+                if (typeof value !== 'number') value = 0;
+                return value.toLocaleString('en-ZA', { style: 'currency', currency: 'ZAR' });
+            }
+
+            function formatPercent(value) {
+                if (typeof value !== 'number') value = 0;
+                return `${value.toFixed(1)}%`;
+            }
+
+            function formatDate(date) {
+                if (!date) return 'N/A';
+                const d = date instanceof Date ? date : new Date(date);
+                if (isNaN(d.getTime())) return 'Invalid Date';
+                return d.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+            }
+
+            function createChart(ctx, chartId, config) {
+                if (activeCharts[chartId]) {
+                    activeCharts[chartId].destroy();
+                }
+                const newChart = new Chart(ctx, config);
+                activeCharts[chartId] = newChart;
+            }
+
+            function destroyAllCharts() {
+                Object.keys(activeCharts).forEach(id => {
+                    if (activeCharts[id]) {
+                        activeCharts[id].destroy();
+                        delete activeCharts[id];
+                    }
+                });
+            }
+
+            function getThemeColors() {
+                const isLightMode = document.body.classList.contains('light-mode');
+                return {
+                    background: isLightMode ? '#ffffff' : '#16213e',
+                    text: isLightMode ? '#212529' : '#e9ecef',
+                    border: isLightMode ? '#dee2e6' : '#2a3b5e',
+                    success: isLightMode ? '#198754' : '#16c79a',
+                    danger: isLightMode ? '#dc3545' : '#e94560',
+                    warning: isLightMode ? '#ffc107' : '#f7b731',
+                    info: isLightMode ? '#0dcaf0' : '#3498db',
+                };
+            }
+
+            window.addEventListener('themeChanged', () => {
+                Object.values(activeCharts).forEach(chart => {
+                    const themeColors = getThemeColors();
+                    chart.options.scales.y.ticks.color = themeColors.text;
+                    chart.options.scales.x.ticks.color = themeColors.text;
+                    chart.options.scales.y.grid.color = themeColors.border;
+                    chart.options.scales.x.grid.color = themeColors.border;
+                    chart.options.plugins.legend.labels.color = themeColors.text;
+                    chart.update();
+                });
+            });
+
+            return { formatCurrency, formatPercent, formatDate, createChart, destroyAllCharts, getThemeColors };
+        })();
+
+        // --- Module: Templates ---
+        App.templates = (() => {
+            const { formatCurrency, formatPercent, formatDate } = App.helpers;
+            
+            const getDashboardHTML = () => `
+                <div id="kpi-grid" class="kpi-grid">
+                    <div id="kpi-net-revenue"></div>
+                    <div id="kpi-total-costs"></div>
+                    <div id="kpi-profit-margin"></div>
+                    <div id="kpi-active-projects"></div>
+                </div>
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div class="lg:col-span-2 chart-container">
+                        <h3>Top Projects: Revenue vs. Costs</h3>
+                        <div class="chart-wrapper">
+                            <canvas id="main-dashboard-chart"></canvas>
+                        </div>
+                    </div>
+                    <div class="table-container">
+                        <h3 class="p-4">Recent In-Progress Projects</h3>
+                        <table class="custom-table">
+                            <thead>
+                                <tr><th>Project</th><th>Lead</th><th>Profit</th></tr>
+                            </thead>
+                            <tbody id="recent-projects-tbody"></tbody>
+                        </table>
+                        <div class="p-4">
+                            <button id="seed-data-btn" class="btn btn-secondary w-full">Update Seed Data</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            const getPortfolioHTML = () => `
+                <div class="filter-controls">
+                    <label for="status-filter">Filter by status:</label>
+                    <select id="status-filter" class="form-control" style="width: 200px;">
+                        <option value="all">All</option>
+                        <option value="planning">Planning</option>
+                        <option value="in-progress">In Progress</option>
+                        <option value="completed">Completed</option>
+                        <option value="on-hold">On Hold</option>
+                    </select>
+                </div>
+                <div class="table-container">
+                    <table class="custom-table">
+                        <thead>
+                            <tr>
+                                <th>Project Name</th>
+                                <th>Client</th>
+                                <th>Project Lead</th>
+                                <th>Status</th>
+                                <th>Net Profit</th>
+                            </tr>
+                        </thead>
+                        <tbody id="portfolio-table-body"></tbody>
+                    </table>
+                </div>
+            `;
+
+            const getRevenueHTML = () => `
+                <div class="kpi-grid">
+                    <div id="kpi-total-contract-value"></div>
+                    <div id="kpi-total-payments-received"></div>
+                    <div id="kpi-outstanding-revenue"></div>
+                </div>
+                <div class="chart-container">
+                    <h3>Revenue Per Project</h3>
+                    <div class="chart-wrapper">
+                        <canvas id="revenue-by-project-chart"></canvas>
+                    </div>
+                </div>
+                <div class="table-container">
+                    <h3 class="p-4">All Revenue Payments</h3>
+                    <table class="custom-table">
+                        <thead>
+                            <tr><th>Date</th><th>Project</th><th>Client</th><th>Description</th><th style="text-align:right;">Amount</th></tr>
+                        </thead>
+                        <tbody id="revenue-details-tbody"></tbody>
+                    </table>
+                </div>
+            `;
+
+            const getExpensesHTML = () => `
+                <div class="kpi-grid">
+                    <div id="kpi-total-expenses"></div>
+                    <div id="kpi-direct-costs"></div>
+                    <div id="kpi-outsourced-costs"></div>
+                </div>
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div class="lg:col-span-2 chart-container">
+                        <h3>Expenses by Project</h3>
+                        <div class="chart-wrapper">
+                            <canvas id="expenses-by-project-chart"></canvas>
+                        </div>
+                    </div>
+                    <div class="chart-container">
+                        <h3>Expense Breakdown</h3>
+                        <div class="doughnut-chart-wrapper">
+                            <canvas id="expense-breakdown-chart"></canvas>
+                        </div>
+                    </div>
+                </div>
+                <div class="table-container">
+                    <h3 class="p-4">All Expense Items</h3>
+                    <table class="custom-table">
+                        <thead>
+                            <tr><th>Date</th><th>Project</th><th>Description</th><th>Type</th><th style="text-align:right;">Amount</th></tr>
+                        </thead>
+                        <tbody id="expense-details-tbody"></tbody>
+                    </table>
+                </div>
+            `;
+
+            const getProfitHTML = () => `
+                <div class="kpi-grid">
+                    <div id="kpi-overall-net-profit"></div>
+                    <div id="kpi-avg-profit-margin"></div>
+                    <div id="kpi-most-profitable"></div>
+                </div>
+                <div class="chart-container">
+                    <h3>Net Profit by Project</h3>
+                    <div class="chart-wrapper">
+                        <canvas id="profit-by-project-chart"></canvas>
+                    </div>
+                </div>
+                <div class="table-container">
+                    <h3 class="p-4">Project Profitability Breakdown</h3>
+                    <table class="custom-table">
+                        <thead>
+                            <tr><th>Project</th><th>Total Revenue</th><th>Total Costs</th><th>Net Profit</th><th>Margin</th></tr>
+                        </thead>
+                        <tbody id="profit-details-tbody"></tbody>
+                    </table>
+                </div>
+            `;
+
+            const getTrendsHTML = () => `
+                <div class="chart-container">
+                    <h3>Monthly Financial Trends (Revenue, Costs, Profit)</h3>
+                    <div class="chart-wrapper" style="height: 500px;">
+                        <canvas id="monthly-trends-chart"></canvas>
+                    </div>
+                </div>
+            `;
+
+            const getCalendarHTML = () => `
+                <div class="calendar-container">
+                    <div class="calendar-header">
+                        <button id="prev-month-btn" class="btn btn-secondary"><i data-lucide="chevron-left"></i></button>
+                        <h2 id="month-year"></h2>
+                        <button id="next-month-btn" class="btn btn-secondary"><i data-lucide="chevron-right"></i></button>
+                    </div>
+                    <div class="calendar-grid" id="calendar-grid"></div>
+                </div>
+            `;
+
+            const getTeamHTML = (members) => `
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    ${members.map(createTeamMemberCard).join('')}
+                </div>
+            `;
+
+            const getReportsHTML = (projects) => `
+                <div class="chart-container max-w-2xl mx-auto">
+                    <h3>Generate a Report</h3>
+                    <div class="form-group">
+                        <label for="report-type">Report Type</label>
+                        <select id="report-type" class="form-control">
+                            <option value="project_summary">Project Summary</option>
+                            <option value="full_expense">Full Expense Report</option>
+                            <option value="full_revenue_profit">Full Revenue & Profit Report</option>
+                        </select>
+                    </div>
+                    <div id="project-select-group" class="form-group">
+                        <label for="project-select">Select Project</label>
+                        <select id="project-select" class="form-control">
+                            ${projects.map(p => `<option value="${p.id}">${p.name}</option>`).join('')}
+                        </select>
+                    </div>
+                    <button id="generate-report-btn" class="btn btn-primary">Generate Report</button>
+                </div>
+            `;
+
+            const createKpiCard = (title, value, icon, colorClass, format = 'currency', footerText = '') => {
+                let formattedValue;
+                switch (format) {
+                    case 'percent':
+                        formattedValue = formatPercent(value);
+                        break;
+                    case 'integer':
+                        formattedValue = value;
+                        break;
+                    case 'string':
+                        formattedValue = value;
+                        break;
+                    default:
+                        formattedValue = formatCurrency(value);
+                }
+
+                return `
+                    <div class="kpi-card">
+                        <div class="kpi-card-header">
+                            <h3>${title}</h3>
+                            <div class="icon ${colorClass}"><i data-lucide="${icon}"></i></div>
+                        </div>
+                        <div class="kpi-value">${formattedValue}</div>
+                        ${footerText ? `<div class="kpi-footer">${footerText}</div>` : ''}
+                    </div>
+                `;
+            };
+
+            const createRecentProjectRow = (project) => `
+                <tr class="clickable-row" data-id="${project.id}">
+                    <td>
+                        <div>${project.name}</div>
+                        <div class="text-sm text-secondary">${project.client}</div>
+                    </td>
+                    <td>${project.projectLead}</td>
+                    <td style="color: ${project.metrics.netProfit >= 0 ? 'var(--success)' : 'var(--danger)'};">
+                        ${formatCurrency(project.metrics.netProfit)}
+                    </td>
+                </tr>
+            `;
+
+            const createPortfolioTableRow = (project) => `
+                <tr class="clickable-row" data-id="${project.id}">
+                    <td>
+                        <div>${project.name}</div>
+                        <div class="text-sm text-secondary">${project.client}</div>
+                    </td>
+                    <td>${project.projectLead}</td>
+                    <td><span class="status-badge status-${project.status.replace(/\s+/g, '-')}">${project.status}</span></td>
+                    <td style="color: ${project.metrics.netProfit >= 0 ? 'var(--success)' : 'var(--danger)'};">
+                        ${formatCurrency(project.metrics.netProfit)}
+                    </td>
+                </tr>
+            `;
+
+            const createRevenueDetailRow = (payment) => `
+                <tr>
+                    <td>${formatDate(payment.date)}</td>
+                    <td>${payment.projectName}</td>
+                    <td>${payment.client}</td>
+                    <td>${payment.description}</td>
+                    <td style="text-align:right; color: var(--success);">${formatCurrency(payment.amount)}</td>
+                </tr>
+            `;
+
+            const createExpenseDetailRow = (expense) => `
+                <tr>
+                    <td>${formatDate(expense.date)}</td>
+                    <td>${expense.projectName}</td>
+                    <td>${expense.description}</td>
+                    <td><span class="status-badge status-${expense.type === 'direct' ? 'planning' : 'in-progress'}">${expense.type}</span></td>
+                    <td style="text-align:right; color: var(--danger);">${formatCurrency(expense.amount)}</td>
+                </tr>
+            `;
+
+            const createProfitDetailRow = (project) => `
+                <tr>
+                    <td>${project.name}</td>
+                    <td style="color: var(--success);">${formatCurrency(project.metrics.totalRevenue)}</td>
+                    <td style="color: var(--danger);">${formatCurrency(project.metrics.totalExpenses)}</td>
+                    <td style="font-weight: 600; color: ${project.metrics.netProfit >= 0 ? 'var(--success)' : 'var(--danger)'};">
+                        ${formatCurrency(project.metrics.netProfit)}
+                    </td>
+                    <td style="color: ${project.metrics.profitMargin >= 0 ? 'var(--success)' : 'var(--danger)'};">
+                        ${formatPercent(project.metrics.profitMargin)}
+                    </td>
+                </tr>
+            `;
+
+            const createTeamMemberCard = (name) => `
+                <div class="kpi-card">
+                    <div style="display: flex; align-items: center;">
+                        <div style="width: 4rem; height: 4rem; border-radius: 50%; background-color: var(--bg-tertiary); display: flex; align-items: center; justify-content: center; margin-right: 1rem;">
+                            <i data-lucide="user" style="width: 2rem; height: 2rem;"></i>
+                        </div>
+                        <div>
+                            <h3 style="font-size: 1.125rem; font-weight: bold;">${name}</h3>
+                            <p style="color: var(--text-secondary);">Project Lead</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            const getAddProjectModalHTML = () => `
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h3>Add New Project</h3>
+                        <button class="close-modal-btn"><i data-lucide="x"></i></button>
+                    </div>
+                    <form id="add-project-form" class="modal-body">
+                        <div class="form-group">
+                            <label for="projectName">Project Name</label>
+                            <input type="text" id="projectName" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="clientName">Client Name</label>
+                            <input type="text" id="clientName" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="projectLead">Project Lead</label>
+                            <input type="text" id="projectLead" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="totalContractValue">Total Contract Value</label>
+                            <input type="number" id="totalContractValue" class="form-control" required min="0" step="1000">
+                        </div>
+                        <div class="form-group">
+                            <label for="status">Initial Status</label>
+                            <select id="status" class="form-control">
+                                <option value="planning">Planning</option>
+                                <option value="in-progress">In Progress</option>
+                                <option value="on-hold">On Hold</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="paymentFrequency">Payment Frequency</label>
+                            <select id="paymentFrequency" class="form-control">
+                                <option value="monthly">Monthly</option>
+                                <option value="quarterly">Quarterly</option>
+                                <option value="milestone">Milestone-based</option>
+                            </select>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary close-modal-btn">Cancel</button>
+                            <button type="submit" class="btn btn-primary">Add Project</button>
+                        </div>
+                    </form>
+                </div>
+            `;
+
+            const getProjectDetailsModalHTML = (project) => {
+                const today = new Date().toISOString().split('T')[0];
+                return `
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h3>${project.name}</h3>
+                        <button class="close-modal-btn"><i data-lucide="x"></i></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="modal-tabs">
+                            <a class="tab-link active" data-tab="tab-revenue">Revenue</a>
+                            <a class="tab-link" data-tab="tab-expenses">Expenses</a>
+                            <a class="tab-link" data-tab="tab-partners">Partners</a>
+                            <a class="tab-link" data-tab="tab-settings">Settings</a>
+                        </div>
+
+                        <!-- Revenue Tab -->
+                        <div id="tab-revenue" class="tab-content active">
+                            <div class="sub-section">
+                                <h4>Add Revenue Payment</h4>
+                                <form id="add-revenue-form" style="display: grid; grid-template-columns: repeat(1, 1fr); gap: 1rem; align-items: flex-end;">
+                                    <div class="form-group" style="grid-column: 1 / -1;">
+                                        <label>Description</label>
+                                        <input type="text" name="description" class="form-control" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Amount</label>
+                                        <input type="number" name="amount" class="form-control" required min="0" step="100">
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Date</label>
+                                        <input type="date" name="date" class="form-control" value="${today}" required>
+                                    </div>
+                                    <div class="form-group" style="grid-column: 1 / -1;">
+                                        <button type="submit" class="btn btn-success">Add Payment</button>
+                                    </div>
+                                </form>
+                            </div>
+                            <div class="sub-section">
+                                <h4>Recorded Payments</h4>
+                                <div class="table-container">
+                                    <table id="revenue-details-table" class="custom-table">
+                                        <thead><tr><th>Date</th><th>Description</th><th style="text-align:right;">Amount</th><th></th></tr></thead>
+                                        <tbody>${(project.revenuePayments || []).map((p, i) => createSubTableRow(p, i, 'revenue')).join('')}</tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Expenses Tab -->
+                        <div id="tab-expenses" class="tab-content">
+                             <div class="sub-section">
+                                <h4>Add Expense</h4>
+                                <form id="add-expense-form" style="display: grid; grid-template-columns: repeat(1, 1fr); gap: 1rem; align-items: flex-end;">
+                                    <div class="form-group" style="grid-column: 1 / -1;">
+                                        <label>Description</label>
+                                        <input type="text" name="description" class="form-control" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Amount</label>
+                                        <input type="number" name="amount" class="form-control" required min="0" step="100">
+                                    </div>
+                                     <div class="form-group">
+                                        <label>Type</label>
+                                        <select name="type" class="form-control"><option value="direct">Direct</option><option value="outsourced">Outsourced</option></select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Date</label>
+                                        <input type="date" name="date" class="form-control" value="${today}" required>
+                                    </div>
+                                    <div class="form-group" style="grid-column: 1 / -1;">
+                                        <button type="submit" class="btn btn-success">Add Expense</button>
+                                    </div>
+                                </form>
+                            </div>
+                            <div class="sub-section">
+                                <h4>Recorded Expenses</h4>
+                                <div class="table-container">
+                                    <table id="expenses-details-table" class="custom-table">
+                                        <thead><tr><th>Date</th><th>Description</th><th>Type</th><th style="text-align:right;">Amount</th><th></th></tr></thead>
+                                        <tbody>${(project.expenses || []).map((e, i) => createSubTableRow(e, i, 'expense')).join('')}</tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Partners Tab -->
+                        <div id="tab-partners" class="tab-content">
+                            <p>Functionality for managing project partners and outsourced teams would be implemented here.</p>
+                        </div>
+                        
+                        <!-- Settings Tab -->
+                        <div id="tab-settings" class="tab-content">
+                            <div class="sub-section">
+                                <h4>Project Settings</h4>
+                                <p>Edit core project details here.</p>
+                                <button id="delete-project-btn" class="btn btn-danger" style="margin-top: 1rem;">Delete Project</button>
+                            </div>
+                        </div>
+
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary close-modal-btn">Close</button>
+                    </div>
+                </div>
+                `;
+            };
+
+            const createSubTableRow = (item, index, type) => `
+                <tr>
+                    <td>${formatDate(item.date)}</td>
+                    <td>${item.description}</td>
+                    ${type === 'expense' ? `<td><span class="status-badge status-${item.type === 'direct' ? 'planning' : 'in-progress'}">${item.type}</span></td>` : ''}
+                    <td style="text-align:right;">${formatCurrency(item.amount)}</td>
+                    <td><button class="delete-sub-item-btn" data-index="${index}"><i data-lucide="trash-2" style="width: 1rem; height: 1rem; color: var(--danger);"></i></button></td>
+                </tr>
+            `;
+
+            return {
+                getDashboardHTML, getPortfolioHTML, getRevenueHTML, getExpensesHTML, getProfitHTML, getTrendsHTML, getTeamHTML, getReportsHTML,
+                createKpiCard, createRecentProjectRow, createPortfolioTableRow, createRevenueDetailRow, createExpenseDetailRow, createProfitDetailRow, createTeamMemberCard,
+                getAddProjectModalHTML, getProjectDetailsModalHTML, createSubTableRow
+            };
+        })();
+        
+        // --- Module: Calculations Service ---
+        App.calculations = (() => {
+            function calculateTotal(items = []) {
+                return items.reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
+            }
+
+            function calculateProjectMetrics(project) {
+                const totalRevenue = calculateTotal(project.revenuePayments);
+                const totalExpenses = calculateTotal(project.expenses);
+                const netProfit = totalRevenue - totalExpenses;
+                const profitMargin = totalRevenue > 0 ? (netProfit / totalRevenue) * 100 : 0;
+                
+                return { totalRevenue, totalExpenses, netProfit, profitMargin };
+            }
+
+            function getOverallMetrics(projects) {
+                const allMetrics = projects.map(calculateProjectMetrics);
+                const netRevenueReceived = allMetrics.reduce((sum, p) => sum + p.totalRevenue, 0);
+                const totalCostsToDate = allMetrics.reduce((sum, p) => sum + p.totalExpenses, 0);
+                const totalContractValue = projects.reduce((sum, p) => sum + (Number(p.totalContractValue) || 0), 0);
+                const outstandingRevenue = totalContractValue - netRevenueReceived;
+                const netProfitMargin = netRevenueReceived > 0 ? ((netRevenueReceived - totalCostsToDate) / netRevenueReceived) * 100 : 0;
+                const activeProjects = projects.filter(p => p.status === 'in-progress').length;
+                const totalDirectCosts = projects.flatMap(p => p.expenses).filter(e => e.type === 'direct').reduce((sum, e) => sum + (Number(e.amount) || 0), 0);
+                const totalOutsourcedCosts = projects.flatMap(p => p.expenses).filter(e => e.type === 'outsourced').reduce((sum, e) => sum + (Number(e.amount) || 0), 0);
+
+                return { netRevenueReceived, totalCostsToDate, netProfitMargin, activeProjects, totalContractValue, outstandingRevenue, totalDirectCosts, totalOutsourcedCosts };
+            }
+
+            function getMonthlyTrends(projects) {
+                const monthlyData = {};
+                const allTransactions = [
+                    ...projects.flatMap(p => p.revenuePayments.map(item => ({ ...item, type: 'revenue' }))),
+                    ...projects.flatMap(p => p.expenses.map(item => ({ ...item, type: 'expense' })))
+                ];
+
+                allTransactions.forEach(item => {
+                    const date = new Date(item.date);
+                    const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+                    if (!monthlyData[monthKey]) {
+                        monthlyData[monthKey] = { revenue: 0, costs: 0, net: 0 };
+                    }
+                    if (item.type === 'revenue') {
+                        monthlyData[monthKey].revenue += Number(item.amount) || 0;
+                    } else {
+                        monthlyData[monthKey].costs += Number(item.amount) || 0;
+                    }
+                });
+
+                const sortedKeys = Object.keys(monthlyData).sort();
+                const labels = [];
+                const revenueData = [];
+                const costsData = [];
+                const netProfitData = [];
+
+                sortedKeys.forEach(key => {
+                    labels.push(key);
+                    const month = monthlyData[key];
+                    month.net = month.revenue - month.costs;
+                    revenueData.push(month.revenue);
+                    costsData.push(month.costs);
+                    netProfitData.push(month.net);
+                });
+
+                return { labels, revenueData, costsData, netProfitData };
+            }
+
+            return { calculateProjectMetrics, getOverallMetrics, getMonthlyTrends };
+        })();
+
+        // --- Module: Modal Component ---
+        App.modal = (() => {
+            const { getAddProjectModalHTML, getProjectDetailsModalHTML } = App.templates;
+            const { addProject, updateProject, deleteProject } = App.dataService;
+            const modalContainer = document.getElementById('modal-container');
+
+            function initModal() {
+                document.getElementById('add-project-btn').addEventListener('click', showAddProjectModal);
+                modalContainer.addEventListener('click', (e) => {
+                    if (e.target === modalContainer || e.target.closest('.close-modal-btn')) {
+                        closeModal();
+                    }
+                });
+            }
+
+            function showModal(content) {
+                modalContainer.innerHTML = content;
+                modalContainer.classList.remove('modal-container-hidden');
+                modalContainer.classList.add('modal-container-visible');
+                lucide.createIcons();
+            }
+
+            function closeModal() {
+                modalContainer.classList.add('modal-container-hidden');
+                modalContainer.classList.remove('modal-container-visible');
+                modalContainer.innerHTML = '';
+            }
+
+            function showAddProjectModal() {
+                showModal(getAddProjectModalHTML());
+                document.getElementById('add-project-form').addEventListener('submit', handleAddProject);
+            }
+
+            function handleAddProject(e) {
+                e.preventDefault();
+                const form = e.target;
+                const projectData = {
+                    name: form.projectName.value, client: form.clientName.value, projectLead: form.projectLead.value,
+                    totalContractValue: parseFloat(form.totalContractValue.value), status: form.status.value, paymentFrequency: form.paymentFrequency.value,
+                };
+                addProject(projectData);
+                closeModal();
+            }
+
+            function showProjectDetailsModal(project) {
+                showModal(getProjectDetailsModalHTML(project));
+                setupDetailsModalEventListeners(project);
+            }
+            
+            function setupDetailsModalEventListeners(project) {
+                document.querySelector('.modal-tabs').addEventListener('click', (e) => {
+                    const tabLink = e.target.closest('.tab-link');
+                    if (!tabLink) return;
+                    document.querySelectorAll('.tab-link').forEach(t => t.classList.remove('active'));
+                    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                    tabLink.classList.add('active');
+                    document.getElementById(tabLink.dataset.tab).classList.add('active');
+                });
+
+                document.getElementById('add-revenue-form').addEventListener('submit', (e) => handleAddSubItem(e, project, 'revenuePayments'));
+                document.getElementById('add-expense-form').addEventListener('submit', (e) => handleAddSubItem(e, project, 'expenses'));
+                document.getElementById('revenue-details-table').addEventListener('click', (e) => handleDeleteSubItem(e, project, 'revenuePayments'));
+                document.getElementById('expenses-details-table').addEventListener('click', (e) => handleDeleteSubItem(e, project, 'expenses'));
+                document.getElementById('delete-project-btn').addEventListener('click', () => handleDeleteProject(project));
+            }
+
+            function handleAddSubItem(e, project, type) {
+                e.preventDefault();
+                const form = e.target;
+                const newItem = {
+                    description: form.description.value, amount: parseFloat(form.amount.value), date: form.date.value,
+                };
+                if (type === 'expenses') newItem.type = form.type.value;
+                const updatedItems = [...(project[type] || []), newItem];
+                updateProject(project.id, { [type]: updatedItems });
+            }
+
+            function handleDeleteSubItem(e, project, type) {
+                const deleteBtn = e.target.closest('.delete-sub-item-btn');
+                if (!deleteBtn) return;
+                const index = parseInt(deleteBtn.dataset.index, 10);
+                if (isNaN(index) || !confirm('Are you sure you want to delete this item?')) return;
+                const updatedItems = project[type].filter((_, i) => i !== index);
+                updateProject(project.id, { [type]: updatedItems });
+            }
+
+            function handleDeleteProject(project) {
+                if (confirm(`Are you sure you want to permanently delete the project "${project.name}"? This action cannot be undone.`)) {
+                    deleteProject(project.id);
+                    closeModal();
+                }
+            }
+
+            return { initModal, showProjectDetailsModal };
+        })();
+        
+        // --- Page Modules ---
+        App.pages = {};
+        App.pages.dashboard = (() => {
+            const { getDashboardHTML, createKpiCard, createRecentProjectRow } = App.templates;
+            const { getOverallMetrics, calculateProjectMetrics } = App.calculations;
+            const { seedDatabase } = App.dataService;
+            const { showProjectDetailsModal } = App.modal;
+            const { createChart, getThemeColors } = App.helpers;
+
+            function render(projects) {
+                const appContent = document.getElementById('app-content');
+                appContent.innerHTML = getDashboardHTML();
+
+                const metrics = getOverallMetrics(projects);
+                const projectsWithMetrics = projects.map(p => ({ ...p, metrics: calculateProjectMetrics(p) }));
+
+                document.getElementById('kpi-net-revenue').innerHTML = createKpiCard('Net Revenue Received', metrics.netRevenueReceived, 'dollar-sign', 'kpi-icon-revenue');
+                document.getElementById('kpi-total-costs').innerHTML = createKpiCard('Total Costs To Date', metrics.totalCostsToDate, 'shield-alert', 'kpi-icon-costs');
+                document.getElementById('kpi-profit-margin').innerHTML = createKpiCard('Net Profit Margin', metrics.netProfitMargin, 'trending-up', 'kpi-icon-profit', 'percent');
+                document.getElementById('kpi-active-projects').innerHTML = createKpiCard('Active Projects', metrics.activeProjects, 'briefcase', 'kpi-icon-projects', 'integer');
+
+                const recentProjectsContainer = document.getElementById('recent-projects-tbody');
+                const inProgressProjects = projectsWithMetrics.filter(p => p.status === 'in-progress').slice(0, 4);
+                recentProjectsContainer.innerHTML = inProgressProjects.length > 0 ? inProgressProjects.map(createRecentProjectRow).join('') : '<tr><td colspan="4" style="text-align:center; padding: 2rem;">No projects currently in progress.</td></tr>';
+
+                const topProjects = [...projectsWithMetrics].sort((a, b) => b.metrics.totalRevenue - a.metrics.totalRevenue).slice(0, 7);
+                const themeColors = getThemeColors();
+                const chartCtx = document.getElementById('main-dashboard-chart').getContext('2d');
+                createChart(chartCtx, 'main-dashboard-chart', {
+                    type: 'bar',
+                    data: {
+                        labels: topProjects.map(p => p.name),
+                        datasets: [
+                            { label: 'Net Revenue', data: topProjects.map(p => p.metrics.totalRevenue), backgroundColor: themeColors.success },
+                            { label: 'Total Costs', data: topProjects.map(p => p.metrics.totalExpenses), backgroundColor: themeColors.danger }
+                        ]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true, ticks: { color: themeColors.text }, grid: { color: themeColors.border } }, x: { ticks: { color: themeColors.text }, grid: { color: themeColors.border } } }, plugins: { legend: { labels: { color: themeColors.text } } } }
+                });
+
+                document.getElementById('seed-data-btn').addEventListener('click', () => {
+                    if (confirm('Are you sure you want to delete all data and apply seed data? This cannot be undone.')) {
+                        seedDatabase();
+                    }
+                });
+
+                recentProjectsContainer.addEventListener('click', (e) => {
+                    const row = e.target.closest('.clickable-row');
+                    if (row) {
+                        const project = projects.find(p => p.id === row.dataset.id);
+                        if (project) showProjectDetailsModal(project);
+                    }
+                });
+            }
+            return { render };
+        })();
+        
+        App.pages.portfolio = (() => {
+            const { getPortfolioHTML, createPortfolioTableRow } = App.templates;
+            const { calculateProjectMetrics } = App.calculations;
+            const { showProjectDetailsModal } = App.modal;
+
+            function render(projects) {
+                const appContent = document.getElementById('app-content');
+                appContent.innerHTML = getPortfolioHTML();
+
+                const projectsWithMetrics = projects.map(p => ({ ...p, metrics: calculateProjectMetrics(p) }));
+                const filterSelect = document.getElementById('status-filter');
+                const tableBody = document.getElementById('portfolio-table-body');
+
+                function renderTable(statusFilter) {
+                    const filteredProjects = statusFilter === 'all' ? projectsWithMetrics : projectsWithMetrics.filter(p => p.status === statusFilter);
+                    tableBody.innerHTML = filteredProjects.length > 0 ? filteredProjects.map(createPortfolioTableRow).join('') : `<tr><td colspan="5" style="text-align:center; padding: 2rem;">No projects match the selected filter.</td></tr>`;
+                }
+
+                renderTable(filterSelect.value);
+                filterSelect.addEventListener('change', () => renderTable(filterSelect.value));
+                tableBody.addEventListener('click', (e) => {
+                    const row = e.target.closest('.clickable-row');
+                    if (row) {
+                        const project = projects.find(p => p.id === row.dataset.id);
+                        if (project) showProjectDetailsModal(project);
+                    }
+                });
+            }
+            return { render };
+        })();
+        
+        App.pages.revenue = (() => {
+            const { getRevenueHTML, createKpiCard, createRevenueDetailRow } = App.templates;
+            const { getOverallMetrics, calculateProjectMetrics } = App.calculations;
+            const { createChart, getThemeColors } = App.helpers;
+
+            function render(projects) {
+                const appContent = document.getElementById('app-content');
+                appContent.innerHTML = getRevenueHTML();
+
+                const metrics = getOverallMetrics(projects);
+                const projectsWithMetrics = projects.map(p => ({ ...p, metrics: calculateProjectMetrics(p) }));
+
+                document.getElementById('kpi-total-contract-value').innerHTML = createKpiCard('Total Contract Value', metrics.totalContractValue, 'file-spreadsheet', 'kpi-icon-projects');
+                document.getElementById('kpi-total-payments-received').innerHTML = createKpiCard('Total Payments Received', metrics.netRevenueReceived, 'piggy-bank', 'kpi-icon-revenue');
+                document.getElementById('kpi-outstanding-revenue').innerHTML = createKpiCard('Outstanding Revenue', metrics.outstandingRevenue, 'circle-dollar-sign', 'kpi-icon-profit');
+
+                const themeColors = getThemeColors();
+                const chartCtx = document.getElementById('revenue-by-project-chart').getContext('2d');
+                const chartData = projectsWithMetrics.filter(p => p.metrics.totalRevenue > 0);
+
+                createChart(chartCtx, 'revenue-by-project-chart', {
+                    type: 'bar',
+                    data: { labels: chartData.map(p => p.name), datasets: [{ label: 'Total Revenue Received', data: chartData.map(p => p.metrics.totalRevenue), backgroundColor: themeColors.success, }] },
+                    options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, scales: { y: { ticks: { color: themeColors.text }, grid: { display: false } }, x: { ticks: { color: themeColors.text }, grid: { color: themeColors.border } } }, plugins: { legend: { display: false } } }
+                });
+
+                const revenueTableBody = document.getElementById('revenue-details-tbody');
+                const allRevenuePayments = projects.flatMap(p => p.revenuePayments.map(payment => ({ ...payment, projectName: p.name, client: p.client }))).sort((a, b) => new Date(b.date) - new Date(a.date));
+                revenueTableBody.innerHTML = allRevenuePayments.length > 0 ? allRevenuePayments.map(createRevenueDetailRow).join('') : `<tr><td colspan="5" style="text-align:center; padding: 2rem;">No revenue payments have been recorded.</td></tr>`;
+            }
+            return { render };
+        })();
+        
+        App.pages.expenses = (() => {
+            const { getExpensesHTML, createKpiCard, createExpenseDetailRow } = App.templates;
+            const { getOverallMetrics, calculateProjectMetrics } = App.calculations;
+            const { createChart, getThemeColors } = App.helpers;
+
+            function render(projects) {
+                const appContent = document.getElementById('app-content');
+                appContent.innerHTML = getExpensesHTML();
+
+                const metrics = getOverallMetrics(projects);
+                const projectsWithMetrics = projects.map(p => ({ ...p, metrics: calculateProjectMetrics(p) }));
+                
+                document.getElementById('kpi-total-expenses').innerHTML = createKpiCard('Total Expenses', metrics.totalCostsToDate, 'receipt', 'kpi-icon-costs');
+                document.getElementById('kpi-direct-costs').innerHTML = createKpiCard('Total Direct Costs', metrics.totalDirectCosts, 'user-cog', 'kpi-icon-profit');
+                document.getElementById('kpi-outsourced-costs').innerHTML = createKpiCard('Total Outsourced Costs', metrics.totalOutsourcedCosts, 'users', 'kpi-icon-warning');
+
+                const themeColors = getThemeColors();
+                const barChartCtx = document.getElementById('expenses-by-project-chart').getContext('2d');
+                const barChartData = projectsWithMetrics.filter(p => p.metrics.totalExpenses > 0);
+                createChart(barChartCtx, 'expenses-by-project-chart', {
+                    type: 'bar',
+                    data: { labels: barChartData.map(p => p.name), datasets: [{ label: 'Total Expenses', data: barChartData.map(p => p.metrics.totalExpenses), backgroundColor: themeColors.danger, }] },
+                    options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, scales: { y: { ticks: { color: themeColors.text }, grid: { display: false } }, x: { ticks: { color: themeColors.text }, grid: { color: themeColors.border } } }, plugins: { legend: { display: false } } }
+                });
+
+                const doughnutCtx = document.getElementById('expense-breakdown-chart').getContext('2d');
+                createChart(doughnutCtx, 'expense-breakdown-chart', {
+                    type: 'doughnut',
+                    data: { labels: ['Direct Costs', 'Outsourced Costs'], datasets: [{ data: [metrics.totalDirectCosts, metrics.totalOutsourcedCosts], backgroundColor: [themeColors.info, themeColors.warning], borderColor: themeColors.background, borderWidth: 2 }] },
+                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'top', labels: { color: themeColors.text } } } }
+                });
+
+                const expenseTableBody = document.getElementById('expense-details-tbody');
+                const allExpenses = projects.flatMap(p => p.expenses.map(expense => ({ ...expense, projectName: p.name }))).sort((a, b) => new Date(b.date) - new Date(a.date));
+                expenseTableBody.innerHTML = allExpenses.length > 0 ? allExpenses.map(createExpenseDetailRow).join('') : `<tr><td colspan="5" style="text-align:center; padding: 2rem;">No expenses have been recorded.</td></tr>`;
+            }
+            return { render };
+        })();
+        
+        App.pages.profit = (() => {
+            const { getProfitHTML, createKpiCard, createProfitDetailRow } = App.templates;
+            const { getOverallMetrics, calculateProjectMetrics } = App.calculations;
+            const { createChart, getThemeColors, formatCurrency } = App.helpers;
+
+            function render(projects) {
+                const appContent = document.getElementById('app-content');
+                appContent.innerHTML = getProfitHTML();
+
+                const metrics = getOverallMetrics(projects);
+                const projectsWithMetrics = projects.map(p => ({ ...p, metrics: calculateProjectMetrics(p) }));
+                const overallNetProfit = metrics.netRevenueReceived - metrics.totalCostsToDate;
+                const mostProfitableProject = projectsWithMetrics.length > 0 ? projectsWithMetrics.reduce((max, p) => p.metrics.netProfit > max.metrics.netProfit ? p : max) : { name: 'N/A', metrics: { netProfit: 0 } };
+
+                document.getElementById('kpi-overall-net-profit').innerHTML = createKpiCard('Overall Net Profit', overallNetProfit, 'landmark', 'kpi-icon-profit');
+                document.getElementById('kpi-avg-profit-margin').innerHTML = createKpiCard('Avg. Profit Margin', metrics.netProfitMargin, 'percent', 'kpi-icon-revenue', 'percent');
+                document.getElementById('kpi-most-profitable').innerHTML = createKpiCard('Most Profitable Project', mostProfitableProject.name, 'award', 'kpi-icon-warning', 'string', `Profit: ${formatCurrency(mostProfitableProject.metrics.netProfit)}`);
+
+                const themeColors = getThemeColors();
+                const chartCtx = document.getElementById('profit-by-project-chart').getContext('2d');
+                const chartData = projectsWithMetrics.filter(p => p.metrics.netProfit !== 0);
+
+                createChart(chartCtx, 'profit-by-project-chart', {
+                    type: 'bar',
+                    data: { labels: chartData.map(p => p.name), datasets: [{ label: 'Net Profit', data: chartData.map(p => p.metrics.netProfit), backgroundColor: chartData.map(p => p.metrics.netProfit >= 0 ? themeColors.success : themeColors.danger), }] },
+                    options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, scales: { y: { ticks: { color: themeColors.text }, grid: { display: false } }, x: { ticks: { color: themeColors.text }, grid: { color: themeColors.border } } }, plugins: { legend: { display: false } } }
+                });
+
+                const profitTableBody = document.getElementById('profit-details-tbody');
+                profitTableBody.innerHTML = projectsWithMetrics.length > 0 ? projectsWithMetrics.map(createProfitDetailRow).join('') : `<tr><td colspan="5" style="text-align:center; padding: 2rem;">No projects to analyze.</td></tr>`;
+            }
+            return { render };
+        })();
+        
+        App.pages.trends = (() => {
+            const { getTrendsHTML } = App.templates;
+            const { getMonthlyTrends } = App.calculations;
+            const { createChart, getThemeColors } = App.helpers;
+
+            function render(projects) {
+                const appContent = document.getElementById('app-content');
+                appContent.innerHTML = getTrendsHTML();
+
+                const trendsData = getMonthlyTrends(projects);
+                const themeColors = getThemeColors();
+                const chartCtx = document.getElementById('monthly-trends-chart').getContext('2d');
+
+                createChart(chartCtx, 'monthly-trends-chart', {
+                    type: 'bar',
+                    data: {
+                        labels: trendsData.labels,
+                        datasets: [
+                            { type: 'line', label: 'Revenue', data: trendsData.revenueData, borderColor: themeColors.success, backgroundColor: 'transparent', tension: 0.4, yAxisID: 'y' },
+                            { type: 'line', label: 'Costs', data: trendsData.costsData, borderColor: themeColors.danger, backgroundColor: 'transparent', tension: 0.4, yAxisID: 'y' },
+                            { type: 'bar', label: 'Net Profit', data: trendsData.netProfitData, backgroundColor: trendsData.netProfitData.map(p => p >= 0 ? themeColors.info + '80' : themeColors.warning + '80'), yAxisID: 'y' }
+                        ]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true, position: 'left', ticks: { color: themeColors.text }, grid: { color: themeColors.border } }, x: { ticks: { color: themeColors.text }, grid: { color: themeColors.border } } }, plugins: { legend: { labels: { color: themeColors.text } }, tooltip: { mode: 'index', intersect: false } }, interaction: { mode: 'index', intersect: false } }
+                });
+            }
+            return { render };
+        })();
+        
+        App.pages.calendar = (() => {
+            const { getCalendarHTML } = App.templates;
+            let currentDate = new Date();
+
+            function render(projects) {
+                const appContent = document.getElementById('app-content');
+                appContent.innerHTML = getCalendarHTML();
+                
+                document.getElementById('prev-month-btn').addEventListener('click', () => {
+                    currentDate.setMonth(currentDate.getMonth() - 1);
+                    renderCalendar(projects);
+                });
+
+                document.getElementById('next-month-btn').addEventListener('click', () => {
+                    currentDate.setMonth(currentDate.getMonth() + 1);
+                    renderCalendar(projects);
+                });
+
+                renderCalendar(projects);
+            }
+
+            function renderCalendar(projects) {
+                const monthYear = document.getElementById('month-year');
+                const calendarGrid = document.getElementById('calendar-grid');
+                
+                const month = currentDate.getMonth();
+                const year = currentDate.getFullYear();
+
+                monthYear.textContent = `${currentDate.toLocaleString('default', { month: 'long' })} ${year}`;
+                
+                calendarGrid.innerHTML = '';
+
+                const dayHeaders = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+                dayHeaders.forEach(day => {
+                    const dayHeader = document.createElement('div');
+                    dayHeader.classList.add('calendar-day-header');
+                    dayHeader.textContent = day;
+                    calendarGrid.appendChild(dayHeader);
+                });
+
+                const firstDayOfMonth = new Date(year, month, 1).getDay();
+                const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+                for (let i = 0; i < firstDayOfMonth; i++) {
+                    const emptyCell = document.createElement('div');
+                    emptyCell.classList.add('calendar-day', 'other-month');
+                    calendarGrid.appendChild(emptyCell);
+                }
+
+                for (let day = 1; day <= daysInMonth; day++) {
+                    const dayCell = document.createElement('div');
+                    dayCell.classList.add('calendar-day');
+                    
+                    const dayNumber = document.createElement('div');
+                    dayNumber.classList.add('day-number');
+                    dayNumber.textContent = day;
+                    dayCell.appendChild(dayNumber);
+
+                    const eventsContainer = document.createElement('div');
+                    eventsContainer.classList.add('calendar-events');
+
+                    const dayEvents = getEventsForDay(projects, year, month, day);
+                    dayEvents.forEach(event => {
+                        const eventEl = document.createElement('div');
+                        eventEl.classList.add('calendar-event', event.type === 'revenue' ? 'event-revenue' : 'event-expense');
+                        eventEl.textContent = `${event.projectName}: ${App.helpers.formatCurrency(event.amount)}`;
+                        eventsContainer.appendChild(eventEl);
+                    });
+
+                    dayCell.appendChild(eventsContainer);
+                    calendarGrid.appendChild(dayCell);
+                }
+            }
+
+            function getEventsForDay(projects, year, month, day) {
+                const events = [];
+                projects.forEach(project => {
+                    project.revenuePayments.forEach(payment => {
+                        const paymentDate = new Date(payment.date);
+                        if (paymentDate.getFullYear() === year && paymentDate.getMonth() === month && paymentDate.getDate() === day) {
+                            events.push({ ...payment, type: 'revenue', projectName: project.name });
+                        }
+                    });
+                    project.expenses.forEach(expense => {
+                        const expenseDate = new Date(expense.date);
+                        if (expenseDate.getFullYear() === year && expenseDate.getMonth() === month && expenseDate.getDate() === day) {
+                            events.push({ ...expense, type: 'expense', projectName: project.name });
+                        }
+                    });
+                });
+                return events;
+            }
+
+            return { render };
+        })();
+        
+        App.pages.team = (() => {
+            const { getTeamHTML } = App.templates;
+
+            function render(projects) {
+                const appContent = document.getElementById('app-content');
+                const teamMembers = [...new Map(projects.map(p => [p.projectLead, p])).values()].map(p => p.projectLead);
+                const allMembers = [...new Set([...teamMembers, "John Doe", "Jane Smith"])];
+                appContent.innerHTML = getTeamHTML(allMembers);
+            }
+            return { render };
+        })();
+        
+        App.pages.reports = (() => {
+            const { getReportsHTML } = App.templates;
+
+            function render(projects) {
+                const appContent = document.getElementById('app-content');
+                appContent.innerHTML = getReportsHTML(projects);
+
+                const reportTypeSelect = document.getElementById('report-type');
+                const projectSelectGroup = document.getElementById('project-select-group');
+                const generateBtn = document.getElementById('generate-report-btn');
+
+                reportTypeSelect.addEventListener('change', () => {
+                    projectSelectGroup.style.display = reportTypeSelect.value === 'project_summary' ? 'block' : 'none';
+                });
+
+                generateBtn.addEventListener('click', () => {
+                    const reportType = reportTypeSelect.options[reportTypeSelect.selectedIndex].text;
+                    let message = `Generating "${reportType}"...`;
+                    if (reportTypeSelect.value === 'project_summary') {
+                        const projectSelect = document.getElementById('project-select');
+                        message += `\nFor project: ${projectSelect.options[projectSelect.selectedIndex].text}`;
+                    }
+                    alert(message + "\n\n(Report generation logic would be implemented here.)");
+                });
+            }
+            return { render };
+        })();
+
+        // --- Module: Router ---
+        App.router = (() => {
+            const { destroyAllCharts } = App.helpers;
+            let currentProjects = [];
+
+            const routes = {
+                '#dashboard': App.pages.dashboard.render,
+                '#portfolio': App.pages.portfolio.render,
+                '#revenue': App.pages.revenue.render,
+                '#expenses': App.pages.expenses.render,
+                '#profit': App.pages.profit.render,
+                '#trends': App.pages.trends.render,
+                '#calendar': App.pages.calendar.render,
+                '#team': App.pages.team.render,
+                '#reports': App.pages.reports.render,
+            };
+
+            const pageTitles = {
+                '#dashboard': 'Dashboard', '#portfolio': 'Project Portfolio', '#revenue': 'Revenue Analysis',
+                '#expenses': 'Expense Analysis', '#profit': 'Profitability Analysis', '#trends': 'Financial Trends',
+                '#calendar': 'Calendar', '#team': 'Team Management', '#reports': 'Generate Reports',
+            };
+
+            function initRouter(initialProjects) {
+                currentProjects = initialProjects;
+                window.addEventListener('hashchange', () => handleRouteChange(currentProjects));
+                window.addEventListener('dataChanged', (e) => {
+                    console.log('Router detected data change. Re-rendering view.');
+                    currentProjects = e.detail.projects;
+                    handleRouteChange(currentProjects);
+                });
+            }
+
+            function navigateTo(hash, projects) {
+                if (window.location.hash !== hash) {
+                    window.location.hash = hash;
+                } else {
+                    handleRouteChange(projects);
+                }
+            }
+
+            function handleRouteChange(projects) {
+                const hash = window.location.hash || '#dashboard';
+                const renderFunction = routes[hash] || routes['#dashboard'];
+                destroyAllCharts();
+                updateActiveNavLinks(hash);
+                document.getElementById('page-title').textContent = pageTitles[hash] || 'Dashboard';
+                renderFunction(projects);
+                lucide.createIcons();
+            }
+
+            function updateActiveNavLinks(hash) {
+                const page = hash.substring(1);
+                document.querySelectorAll('.sidebar-nav .nav-link, .mobile-nav .mobile-nav-link').forEach(link => {
+                    link.classList.toggle('active', link.dataset.page === page);
+                });
+            }
+            
+            return { initRouter, navigateTo };
+        })();
+
+        // --- Main Application Entry Point ---
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log("BITS App Initializing (Local Version)...");
+            const loadingOverlay = document.getElementById('loading-overlay');
+            
+            // Initialize UI that doesn't depend on data
+            const themeToggleDesktop = document.getElementById('theme-toggle-desktop');
+            const body = document.body;
+            const savedTheme = localStorage.getItem('theme');
+            if (savedTheme === 'light') {
+                body.classList.add('light-mode');
+                themeToggleDesktop.checked = false;
+            } else {
+                themeToggleDesktop.checked = true;
+            }
+            themeToggleDesktop.addEventListener('change', () => {
+                body.classList.toggle('light-mode');
+                localStorage.setItem('theme', body.classList.contains('light-mode') ? 'light' : 'dark');
+                window.dispatchEvent(new CustomEvent('themeChanged'));
+            });
+            document.body.addEventListener('click', e => {
+                const navLink = e.target.closest('a[href^="#"]');
+                if (navLink) {
+                    e.preventDefault();
+                    const newHash = new URL(navLink.href).hash;
+                    if (window.location.hash !== newHash) window.location.hash = newHash;
+                }
+            });
+
+            // Get initial data
+            const initialProjects = App.dataService.getProjects();
+            
+            // Initialize router and modals
+            App.router.initRouter(initialProjects);
+            App.modal.initModal();
+
+            // Initial Page Load
+            const initialHash = window.location.hash || '#dashboard';
+            App.router.navigateTo(initialProjects, initialHash);
+
+            // Hide loading overlay
+            setTimeout(() => {
+                loadingOverlay.classList.add('hidden');
+                console.log("BITS App Ready!");
+            }, 250); // Small delay to ensure first paint
+        });
+    </script>
+</body>
+</html>

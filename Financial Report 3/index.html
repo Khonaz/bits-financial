@@ -129,6 +129,38 @@
             animation: spin 1s linear infinite;
             margin-top: 1rem;
         }
+        
+        /* ------------------------- */
+        /* Notification System       */
+        /* ------------------------- */
+        #notification-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+            width: 320px;
+        }
+
+        .notification {
+            background-color: var(--bg-tertiary);
+            color: var(--text-primary);
+            padding: 1rem 1.5rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            box-shadow: 0 4px 12px var(--shadow-color);
+            border-left: 5px solid var(--info);
+            opacity: 1;
+            transform: translateX(0);
+            transition: all 0.5s ease-out;
+        }
+        .notification.hidden {
+            opacity: 0;
+            transform: translateX(100%);
+        }
+        .notification.success { border-left-color: var(--success); }
+        .notification.danger { border-left-color: var(--danger); }
+        .notification.warning { border-left-color: var(--warning); }
+
 
         @keyframes spin {
             0% { transform: rotate(0deg); }
@@ -851,6 +883,8 @@
         <div class="spinner"></div>
     </div>
 
+    <div id="notification-container"></div>
+
     <div class="app-container">
         <!-- Sidebar Navigation (Desktop) -->
         <nav class="sidebar">
@@ -889,6 +923,8 @@
             <header class="main-header">
                 <h2 id="page-title">Dashboard</h2>
                 <div class="header-actions">
+                    <input type="file" id="csv-file-input" accept=".csv" style="display: none;">
+                    <button id="import-csv-btn" class="btn btn-secondary"><i data-lucide="upload"></i> Import CSV</button>
                     <div class="dropdown">
                         <button id="export-btn" class="btn btn-secondary"><i data-lucide="download"></i> Export</button>
                         <div class="dropdown-content">
@@ -919,6 +955,7 @@
     <div id="modal-container" class="modal-container-hidden"></div>
     
     <!-- External Libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -932,6 +969,27 @@
 
         // --- Global Application Object ---
         const App = {};
+        
+        // --- Module: Notification Service ---
+        App.notify = (() => {
+            const container = document.getElementById('notification-container');
+            
+            function show(message, type = 'success', duration = 5000) {
+                const notif = document.createElement('div');
+                notif.className = `notification ${type}`;
+                notif.innerHTML = `<b>${type.charAt(0).toUpperCase() + type.slice(1)}:</b> ${message}`;
+                container.appendChild(notif);
+                lucide.createIcons();
+
+                setTimeout(() => {
+                    notif.classList.add('hidden');
+                    // Remove the element after the transition ends
+                    notif.addEventListener('transitionend', () => notif.remove());
+                }, duration);
+            }
+
+            return { show };
+        })();
 
         // --- Module: Local Data Service ---
         App.dataService = (() => {
@@ -971,6 +1029,20 @@
                 localProjects.unshift(newProject);
                 notifyDataChange();
             };
+            
+            const addMultipleProjects = (projectsData) => {
+                const newProjects = projectsData.map((projectData, index) => ({
+                    ...projectData,
+                    id: `proj${Date.now()}${index}`, // Ensure unique ID
+                    createdAt: new Date().toISOString(),
+                    // Ensure expenses/revenue are arrays even if not provided
+                    expenses: projectData.expenses || [],
+                    revenuePayments: projectData.revenuePayments || []
+                }));
+                // Add new projects to the beginning of the list
+                localProjects.unshift(...newProjects);
+                notifyDataChange();
+            };
 
             const updateProject = (projectId, dataToUpdate) => {
                 const projectIndex = localProjects.findIndex(p => p.id === projectId);
@@ -990,9 +1062,88 @@
                 notifyDataChange();
             };
 
-            return { getProjects, addProject, updateProject, deleteProject, seedDatabase };
+            return { getProjects, addProject, updateProject, deleteProject, seedDatabase, addMultipleProjects };
         })();
         
+        // --- Module: CSV Import Service ---
+        App.importService = (() => {
+            const fileInput = document.getElementById('csv-file-input');
+            const importBtn = document.getElementById('import-csv-btn');
+
+            function init() {
+                importBtn.addEventListener('click', () => fileInput.click());
+                fileInput.addEventListener('change', handleFileSelect);
+            }
+
+            function handleFileSelect(event) {
+                const file = event.target.files[0];
+                if (!file) return;
+
+                // Use PapaParse to read the CSV file
+                Papa.parse(file, {
+                    header: true,
+                    skipEmptyLines: true,
+                    complete: (results) => {
+                        processData(results.data);
+                    },
+                    error: (error) => {
+                        console.error('Error parsing CSV:', error);
+                        App.notify.show('Failed to parse CSV file. Check console for details.', 'danger');
+                    }
+                });
+                // Reset file input to allow re-uploading the same file if needed
+                event.target.value = '';
+            }
+
+            function processData(data) {
+                console.log("Parsed CSV data:", data);
+                const newProjects = data.map(row => {
+                    // Map CSV columns to the application's data structure
+                    const contractValue = parseFloat(row.Contract_Value_ZAR) || 0;
+                    const projectCost = parseFloat(row['Project cost']) || 0;
+                    
+                    // Basic validation: skip rows without a project name
+                    if (!row.Project_Name) {
+                        return null;
+                    }
+
+                    const newProject = {
+                        name: row.Project_Name,
+                        client: row.Client || 'Unknown Client',
+                        projectLead: 'Imported Lead', // Default value as it's not in the CSV
+                        totalContractValue: contractValue,
+                        startDate: row.Start_Date ? new Date(row.Start_Date).toISOString() : new Date().toISOString(),
+                        endDate: row.End_Date ? new Date(row.End_Date).toISOString() : new Date().toISOString(),
+                        // Sanitize status to match app's values
+                        status: (row.Status || 'planning').toLowerCase().replace(/\s+/g, '-').replace('inprogress', 'in-progress'),
+                        paymentFrequency: 'milestone', // Default value
+                        expenses: [],
+                        revenuePayments: []
+                    };
+
+                    // If there's a project cost, add it as an initial expense
+                    if (projectCost > 0) {
+                        newProject.expenses.push({
+                            description: 'Initial Imported Cost',
+                            amount: projectCost,
+                            type: 'direct', // Assumption
+                            date: newProject.startDate
+                        });
+                    }
+                    return newProject;
+                }).filter(p => p !== null); // Filter out any invalid rows
+
+                if (newProjects.length > 0) {
+                    App.dataService.addMultipleProjects(newProjects);
+                    App.notify.show(`Successfully imported ${newProjects.length} projects!`, 'success');
+                } else {
+                    App.notify.show('No valid projects with a name were found in the file.', 'warning');
+                }
+            }
+
+            return { init };
+        })();
+
         // --- Module: Helpers ---
         App.helpers = (() => {
             let activeCharts = {};
@@ -1771,6 +1922,7 @@
                     pdf.save(`${fileName}.pdf`);
                 } catch (error) {
                     console.error('Error exporting to PDF:', error);
+                    App.notify.show('Failed to export to PDF.', 'danger');
                 } finally {
                     showLoading(false);
                 }
@@ -1779,7 +1931,7 @@
             function exportToCSV(element, fileName) {
                 const table = element.querySelector('.custom-table');
                 if (!table) {
-                    alert('No data table found on this page to export.');
+                    App.notify.show('No data table found on this page to export.', 'warning');
                     return;
                 }
 
@@ -1864,8 +2016,7 @@
                 });
 
                 document.getElementById('seed-data-btn').addEventListener('click', () => {
-                    const customConfirm = window.confirm('Are you sure you want to delete all data and apply seed data? This cannot be undone.');
-                    if (customConfirm) {
+                    if (window.confirm('Are you sure you want to delete all data and apply seed data? This cannot be undone.')) {
                         seedDatabase();
                     }
                 });
@@ -2151,10 +2302,14 @@
                 
                 // Hide/show the "Add Project" button based on the page
                 const addProjectBtn = document.getElementById('add-project-btn');
+                const importCsvBtn = document.getElementById('import-csv-btn');
+                
                 if (hash === '#team' || hash === '#trends' || hash === '#reports') {
                     addProjectBtn.style.display = 'none';
+                    importCsvBtn.style.display = 'none';
                 } else {
                     addProjectBtn.style.display = 'inline-flex';
+                    importCsvBtn.style.display = 'inline-flex';
                 }
 
                 renderFunction(projects);
@@ -2207,6 +2362,7 @@
             App.router.initRouter(initialProjects);
             App.modal.initModal();
             App.exportService.init();
+            App.importService.init();
 
             // Initial Page Load
             const initialHash = window.location.hash || '#dashboard';

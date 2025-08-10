@@ -945,6 +945,7 @@
                 <li><a href="#trends" class="nav-link" data-page="trends"><i data-lucide="bar-chart-3"></i><span>Trends</span></a></li>
                 <li><a href="#team" class="nav-link" data-page="team"><i data-lucide="users"></i><span>Team</span></a></li>
                 <li><a href="#reports" class="nav-link" data-page="reports"><i data-lucide="file-text"></i><span>Reports</span></a></li>
+                <li><a href="#activity" class="nav-link" data-page="activity"><i data-lucide="history"></i><span>Activity</span></a></li>
             </ul>
             <div class="sidebar-footer">
                 <div class="theme-switcher">
@@ -1018,7 +1019,7 @@
 
         // --- Module: Firebase Service ---
         App.firebase = (() => {
-            let db, auth, userId, projectsCollectionRef;
+            let db, auth, userId, projectsCollectionRef, activityCollectionRef;
             const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
 
             function init() {
@@ -1043,13 +1044,12 @@
                             if (user) {
                                 userId = user.uid;
                                 document.getElementById('user-id-display').textContent = userId;
-                                // CHANGED: Data path is now public and shared
                                 projectsCollectionRef = collection(db, `artifacts/${appId}/public/data/projects`);
+                                activityCollectionRef = collection(db, `artifacts/${appId}/public/data/activity`);
                                 console.log("Firebase Auth ready. User ID:", userId);
-                                resolve({ auth, db, userId, projectsCollectionRef });
+                                resolve({ auth, db, userId, projectsCollectionRef, activityCollectionRef });
                             } else {
                                 try {
-                                    // Simplified to always sign in anonymously
                                     await signInAnonymously(auth);
                                 } catch (error) {
                                     console.error("Error during anonymous sign-in:", error);
@@ -1065,8 +1065,10 @@
                     }
                 });
             }
+            
+            const getUserId = () => userId;
 
-            return { init };
+            return { init, getUserId };
         })();
         
         // --- Module: Notification Service ---
@@ -1087,6 +1089,48 @@
             }
 
             return { show };
+        })();
+
+        // --- Module: Activity Log Service ---
+        App.activityLogService = (() => {
+            let db, activityCollectionRef;
+
+            function init(firestore, collectionRef) {
+                db = firestore;
+                activityCollectionRef = collectionRef;
+            }
+
+            async function add(description) {
+                try {
+                    await addDoc(activityCollectionRef, {
+                        description,
+                        timestamp: serverTimestamp(),
+                        userId: App.firebase.getUserId()
+                    });
+                } catch (e) {
+                    console.error("Error adding activity log: ", e);
+                }
+            }
+
+            const getLogs = () => {
+                return new Promise((resolve, reject) => {
+                    const q = query(activityCollectionRef, orderBy("timestamp", "desc"));
+                    onSnapshot(q, (querySnapshot) => {
+                        const logs = [];
+                        querySnapshot.forEach((doc) => {
+                            const data = doc.data();
+                            logs.push({
+                                ...data,
+                                id: doc.id,
+                                timestamp: data.timestamp?.toDate()
+                            });
+                        });
+                        window.dispatchEvent(new CustomEvent('logsChanged', { detail: { logs } }));
+                    }, reject);
+                });
+            };
+
+            return { init, add, getLogs };
         })();
 
         // --- Module: Data Service (Now powered by Firestore) ---
@@ -1115,14 +1159,14 @@
                             };
                             projects.push(projectWithDates);
                         });
-                        window.dispatchEvent(new CustomEvent('dataChanged', { detail: { projects } }));
+                        window.dispatchEvent(new CustomEvent('projectsChanged', { detail: { projects } }));
                     }, reject);
                 });
             };
 
             const addProject = async (projectData) => {
                 try {
-                    await addDoc(projectsCollectionRef, {
+                    const docRef = await addDoc(projectsCollectionRef, {
                         ...projectData,
                         createdAt: serverTimestamp(),
                         expenses: [],
@@ -1130,6 +1174,7 @@
                         partners: []
                     });
                     App.notify.show('Project added successfully!', 'success');
+                    App.activityLogService.add(`Created project: "${projectData.name}"`);
                 } catch (e) {
                     console.error("Error adding document: ", e);
                     App.notify.show('Failed to add project.', 'danger');
@@ -1151,6 +1196,7 @@
                  try {
                     await batch.commit();
                     App.notify.show(`Successfully imported ${projectsData.length} projects!`, 'success');
+                    App.activityLogService.add(`Imported ${projectsData.length} projects from CSV.`);
                  } catch(e) {
                     console.error("Error adding multiple projects: ", e);
                     App.notify.show('Failed to import projects.', 'danger');
@@ -1161,18 +1207,18 @@
                 const projectRef = doc(db, projectsCollectionRef.path, projectId);
                 try {
                     await setDoc(projectRef, dataToUpdate, { merge: true });
-                    // No notification here, as sub-item updates are frequent.
                 } catch (e) {
                     console.error("Error updating document: ", e);
                     App.notify.show('Failed to update project.', 'danger');
                 }
             };
             
-            const deleteProject = async (projectId) => {
+            const deleteProject = async (projectId, projectName) => {
                 const projectRef = doc(db, projectsCollectionRef.path, projectId);
                 try {
                     await deleteDoc(projectRef);
                     App.notify.show('Project deleted successfully.', 'success');
+                    App.activityLogService.add(`Deleted project: "${projectName}"`);
                 } catch(e) {
                     console.error("Error deleting document: ", e);
                     App.notify.show('Failed to delete project.', 'danger');
@@ -1192,6 +1238,7 @@
                 });
                 await batch.commit();
                 App.notify.show('Demo data has been seeded!', 'success');
+                App.activityLogService.add('Reset the database to demo data.');
             };
 
 
@@ -1309,6 +1356,13 @@
                 const adjustedDate = new Date(d.getTime() + d.getTimezoneOffset() * 60000);
                 return adjustedDate.toLocaleDateString('en-CA', { year: 'numeric', month: 'short', day: 'numeric' });
             }
+            
+            function formatDateTime(date) {
+                if (!date) return 'N/A';
+                const d = date instanceof Date ? date : new Date(date);
+                if (isNaN(d.getTime())) return 'Invalid Date';
+                return d.toLocaleString('en-ZA');
+            }
 
             function createChart(ctx, chartId, config) {
                 if (activeCharts[chartId]) {
@@ -1383,12 +1437,12 @@
                 });
             });
 
-            return { formatCurrency, formatPercent, formatDate, createChart, destroyAllCharts, getThemeColors, filterProjectsByDateRange };
+            return { formatCurrency, formatPercent, formatDate, formatDateTime, createChart, destroyAllCharts, getThemeColors, filterProjectsByDateRange };
         })();
 
         // --- Module: Templates ---
         App.templates = (() => {
-            const { formatCurrency, formatPercent, formatDate } = App.helpers;
+            const { formatCurrency, formatPercent, formatDate, formatDateTime } = App.helpers;
             
             const getTimeFilterHTML = (activeRange = 'all') => `
                 <div class="time-filter-controls">
@@ -1579,6 +1633,29 @@
                     </div>
                     <button id="generate-report-btn" class="btn btn-primary">Generate Report</button>
                 </div>
+            `;
+            
+            const getActivityHTML = () => `
+                <div class="table-container">
+                    <table class="custom-table">
+                        <thead>
+                            <tr>
+                                <th>Time</th>
+                                <th>User ID</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="activity-table-body"></tbody>
+                    </table>
+                </div>
+            `;
+            
+            const createActivityLogRow = (log) => `
+                <tr>
+                    <td>${formatDateTime(log.timestamp)}</td>
+                    <td><span style="font-family: monospace; font-size: 0.8rem;">${log.userId}</span></td>
+                    <td>${log.description}</td>
+                </tr>
             `;
 
             const createKpiCard = (title, value, icon, colorClass, format = 'currency', footerText = '') => {
@@ -1990,7 +2067,7 @@
             return {
                 getDashboardHTML, getPortfolioHTML, getRevenueHTML, getExpensesHTML, getProfitHTML, getTrendsHTML, getTeamHTML, getReportsHTML,
                 createKpiCard, createRecentProjectRow, createPortfolioTableRow, createRevenueDetailRow, createExpenseDetailRow, createProfitDetailRow, createEnhancedTeamMemberCard,
-                getAddProjectModalHTML, getProjectDetailsModalHTML, createSubTableRow, createPartnerTableRow, getReportModalHTML, getTimeFilterHTML
+                getAddProjectModalHTML, getProjectDetailsModalHTML, createSubTableRow, createPartnerTableRow, getReportModalHTML, getTimeFilterHTML, getActivityHTML, createActivityLogRow
             };
         })();
         
@@ -2222,6 +2299,7 @@
                         }
                     }
                     updateProject(project.id, { [type]: updatedItems });
+                    App.activityLogService.add(`Edited item in "${project.name}"`);
                 }
             }
             
@@ -2235,6 +2313,7 @@
                 };
                 updateProject(project.id, updatedData);
                 App.notify.show('Project details updated successfully!', 'success');
+                App.activityLogService.add(`Updated details for project: "${project.name}"`);
                 closeModal();
             }
 
@@ -2249,6 +2328,7 @@
                 };
                 const updatedPartners = [...(project.partners || []), newPartner];
                 updateProject(project.id, { partners: updatedPartners });
+                App.activityLogService.add(`Added partner "${newPartner.name}" to project: "${project.name}"`);
                 form.reset();
             }
 
@@ -2261,6 +2341,8 @@
                 if (type === 'expenses') newItem.type = form.type.value;
                 const updatedItems = [...(project[type] || []), newItem];
                 updateProject(project.id, { [type]: updatedItems });
+                const itemType = type === 'expenses' ? 'expense' : 'revenue payment';
+                App.activityLogService.add(`Added ${itemType} to project: "${project.name}"`);
                 form.reset();
             }
 
@@ -2269,11 +2351,13 @@
                 
                 const updatedItems = project[type].filter((_, i) => i !== index);
                 updateProject(project.id, { [type]: updatedItems });
+                const itemType = type === 'expenses' ? 'expense' : type === 'partners' ? 'partner' : 'revenue payment';
+                App.activityLogService.add(`Deleted ${itemType} from project: "${project.name}"`);
             }
 
             function handleDeleteProject(project) {
                 if (window.confirm(`Are you sure you want to permanently delete the project "${project.name}"? This action cannot be undone.`)) {
-                    deleteProject(project.id);
+                    deleteProject(project.id, project.name);
                     closeModal();
                 }
             }
@@ -2863,11 +2947,24 @@
             }
             return { render };
         })();
+        
+        App.pages.activity = (() => {
+            const { getActivityHTML, createActivityLogRow } = App.templates;
+
+            function render(logs) {
+                const appContent = document.getElementById('app-content');
+                appContent.innerHTML = getActivityHTML();
+                const tableBody = document.getElementById('activity-table-body');
+                tableBody.innerHTML = logs.length > 0 ? logs.map(createActivityLogRow).join('') : `<tr><td colspan="3" style="text-align:center; padding: 2rem;">No activity recorded yet.</td></tr>`;
+            }
+            return { render };
+        })();
 
         // --- Module: Router ---
         App.router = (() => {
             const { destroyAllCharts } = App.helpers;
             let currentProjects = [];
+            let currentLogs = [];
 
             const routes = {
                 '#dashboard': App.pages.dashboard.render,
@@ -2878,45 +2975,55 @@
                 '#trends': App.pages.trends.render,
                 '#team': App.pages.team.render,
                 '#reports': App.pages.reports.render,
+                '#activity': App.pages.activity.render,
             };
 
             const pageTitles = {
                 '#dashboard': 'Dashboard', '#portfolio': 'Project Portfolio', '#revenue': 'Revenue Analysis',
                 '#expenses': 'Expense Analysis', '#profit': 'Profitability Analysis', '#trends': 'Financial Trends',
-                '#team': 'Team Overview', '#reports': 'Generate Reports',
+                '#team': 'Team Overview', '#reports': 'Generate Reports', '#activity': 'Activity Log'
             };
 
             function initRouter() {
-                window.addEventListener('hashchange', () => handleRouteChange(currentProjects));
-                window.addEventListener('dataChanged', (e) => {
-                    console.log('Router detected data change. Re-rendering view.');
-                    const newProjects = e.detail.projects;
-                    currentProjects = newProjects;
-                    handleRouteChange(newProjects);
+                window.addEventListener('hashchange', () => handleRouteChange());
+                
+                window.addEventListener('projectsChanged', (e) => {
+                    console.log('Router detected projects change.');
+                    currentProjects = e.detail.projects;
+                    handleRouteChange();
+                });
+                
+                window.addEventListener('logsChanged', (e) => {
+                    console.log('Router detected logs change.');
+                    currentLogs = e.detail.logs;
+                    if (window.location.hash === '#activity') {
+                        handleRouteChange();
+                    }
+                });
 
-                    // Check if a project details modal is open and needs refreshing
+                window.addEventListener('dataChanged', (e) => { // Kept for modal refresh
+                    const newProjects = e.detail.projects;
                     const modalContainer = document.getElementById('modal-container');
                     if (modalContainer.classList.contains('modal-container-visible') && modalContainer.dataset.currentProjectId) {
                         const updatedProject = newProjects.find(p => p.id === modalContainer.dataset.currentProjectId);
                         if (updatedProject) {
                             App.modal.showProjectDetailsModal(updatedProject);
                         } else {
-                            // The project was deleted, so close the modal
                             App.modal.closeModal();
                         }
                     }
                 });
             }
 
-            function navigateTo(projects, hash) {
+            function navigateTo(hash) {
                  if (window.location.hash !== hash) {
                     window.location.hash = hash;
                 } else {
-                    handleRouteChange(projects);
+                    handleRouteChange();
                 }
             }
 
-            function handleRouteChange(projects) {
+            function handleRouteChange() {
                 const hash = window.location.hash || '#dashboard';
                 const renderFunction = routes[hash] || routes['#dashboard'];
                 destroyAllCharts();
@@ -2926,7 +3033,7 @@
                 const addProjectBtn = document.getElementById('add-project-btn');
                 const importCsvBtn = document.getElementById('import-csv-btn');
                 
-                if (hash === '#team' || hash === '#trends' || hash === '#reports') {
+                if (['#team', '#trends', '#reports', '#activity'].includes(hash)) {
                     addProjectBtn.style.display = 'none';
                     importCsvBtn.style.display = 'none';
                 } else {
@@ -2934,7 +3041,8 @@
                     importCsvBtn.style.display = 'inline-flex';
                 }
 
-                renderFunction(projects);
+                const data = hash === '#activity' ? currentLogs : currentProjects;
+                renderFunction(data);
                 lucide.createIcons();
             }
 
@@ -2978,10 +3086,11 @@
 
             try {
                 // Initialize Firebase and wait for auth
-                const { auth, db, userId, projectsCollectionRef } = await App.firebase.init();
+                const { auth, db, userId, projectsCollectionRef, activityCollectionRef } = await App.firebase.init();
 
                 // Initialize services that depend on Firebase
                 App.dataService.init(db, projectsCollectionRef);
+                App.activityLogService.init(db, activityCollectionRef);
                 
                 // Initialize router and modals
                 App.router.initRouter();
@@ -2991,11 +3100,11 @@
 
                 // Start listening for project changes, which will trigger the first render
                 App.dataService.getProjects();
+                App.activityLogService.getLogs();
 
                 // Initial Page Load Navigation
                 const initialHash = window.location.hash || '#dashboard';
-                // The onSnapshot listener will provide the initial data, so we don't need to pass it here.
-                App.router.navigateTo([], initialHash);
+                App.router.navigateTo(initialHash);
 
 
             } catch (error) {
@@ -3015,4 +3124,3 @@
     </script>
 </body>
 </html>
-

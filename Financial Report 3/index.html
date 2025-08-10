@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BITS Consulting | Financial Dashboard (Local)</title>
+    <title>BITS Consulting | Financial Dashboard</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
@@ -931,7 +931,7 @@
                 </div>
                 <div class="user-info">
                     <p>User ID:</p>
-                    <span id="user-id-display">Local Mode</span>
+                    <span id="user-id-display">Connecting...</span>
                 </div>
             </div>
         </nav>
@@ -979,14 +979,69 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
-
-    <!-- Main Application Script -->
+    
+    <!-- Firebase SDK -->
     <script type="module">
-        // This script contains the entire application, refactored to run locally
-        // without any external file dependencies or a backend connection.
+        // Import the functions you need from the SDKs you need
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, onSnapshot, doc, addDoc, setDoc, deleteDoc, writeBatch, serverTimestamp, query, orderBy } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // --- Global Application Object ---
         const App = {};
+
+        // --- Module: Firebase Service ---
+        App.firebase = (() => {
+            let db, auth, userId, projectsCollectionRef;
+            const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+
+            function init() {
+                return new Promise((resolve, reject) => {
+                    // Your Firebase configuration object is placed directly here.
+                    const firebaseConfig = {
+                      apiKey: "AIzaSyB62p-j84uVYL1NE300Vwai447Cb6nepGs",
+                      authDomain: "bits-financial-tracker.firebaseapp.com",
+                      projectId: "bits-financial-tracker",
+                      storageBucket: "bits-financial-tracker.appspot.com",
+                      messagingSenderId: "444550388173",
+                      appId: "1:444550388173:web:748edd102b5e0010e04c84",
+                      measurementId: "G-2YLL34QWZ7"
+                    };
+
+                    try {
+                        const app = initializeApp(firebaseConfig);
+                        auth = getAuth(app);
+                        db = getFirestore(app);
+
+                        onAuthStateChanged(auth, async (user) => {
+                            if (user) {
+                                userId = user.uid;
+                                document.getElementById('user-id-display').textContent = userId;
+                                // CHANGED: Data path is now public and shared
+                                projectsCollectionRef = collection(db, `artifacts/${appId}/public/data/projects`);
+                                console.log("Firebase Auth ready. User ID:", userId);
+                                resolve({ auth, db, userId, projectsCollectionRef });
+                            } else {
+                                try {
+                                    // Simplified to always sign in anonymously
+                                    await signInAnonymously(auth);
+                                } catch (error) {
+                                    console.error("Error during anonymous sign-in:", error);
+                                    document.getElementById('user-id-display').textContent = 'Auth Error';
+                                    reject(error);
+                                }
+                            }
+                        });
+                    } catch (error) {
+                        console.error("Firebase initialization failed with provided config:", error);
+                        document.getElementById('user-id-display').textContent = 'Init Failed';
+                        reject(error);
+                    }
+                });
+            }
+
+            return { init };
+        })();
         
         // --- Module: Notification Service ---
         App.notify = (() => {
@@ -1001,7 +1056,6 @@
 
                 setTimeout(() => {
                     notif.classList.add('hidden');
-                    // Remove the element after the transition ends
                     notif.addEventListener('transitionend', () => notif.remove());
                 }, duration);
             }
@@ -1009,81 +1063,113 @@
             return { show };
         })();
 
-        // --- Module: Local Data Service ---
+        // --- Module: Data Service (Now powered by Firestore) ---
         App.dataService = (() => {
-            const SEED_DATA_SOURCE = [
-                { id: "proj1", name: "InnovateX Platform", client: "Tech Solutions Inc.", projectLead: "Alice Johnson", totalContractValue: 150000, status: "in-progress", startDate: "2025-05-12", endDate: "2025-11-08", paymentFrequency: "monthly", createdAt: new Date(new Date().setDate(new Date().getDate() - 90)), expenses: [ { description: "Cloud Hosting (Q1)", amount: 3000, type: "direct", date: new Date(new Date().setDate(new Date().getDate() - 85)) }, { description: "UX/UI Design Services", amount: 12000, type: "outsourced", date: new Date(new Date().setDate(new Date().getDate() - 80)) }, { description: "Software Licenses", amount: 1500, type: "direct", date: new Date(new Date().setDate(new Date().getDate() - 70)) }, { description: "Cloud Hosting (Q2)", amount: 3000, type: "direct", date: new Date(new Date().setDate(new Date().getDate() - 10)) }, ], revenuePayments: [ { description: "Initial Deposit", amount: 30000, date: new Date(new Date().setDate(new Date().getDate() - 88)) }, { description: "Milestone 1 Payment", amount: 45000, date: new Date(new Date().setDate(new Date().getDate() - 55)) }, { description: "Milestone 2 Payment", amount: 45000, date: new Date(new Date().setDate(new Date().getDate() - 20)) }, ], partners: [ { id: 'partner1', name: 'Design Wizards LLC', role: 'UX/UI Design', cost: 12000 } ] },
-                { id: "proj2", name: "E-Commerce Overhaul", client: "Global Retail Co.", projectLead: "Bob Williams", totalContractValue: 220000, status: "completed", startDate: "2025-02-11", endDate: "2025-07-11", paymentFrequency: "milestone", createdAt: new Date(new Date().setDate(new Date().getDate() - 180)), expenses: [ { description: "Development Team (Internal)", amount: 60000, type: "direct", date: new Date(new Date().setDate(new Date().getDate() - 170)) }, { description: "Payment Gateway Integration", amount: 7500, type: "outsourced", date: new Date(new Date().setDate(new Date().getDate() - 150)) }, { description: "QA Testing Services", amount: 15000, type: "outsourced", date: new Date(new Date().setDate(new Date().getDate() - 100)) }, { description: "Final Deployment Support", amount: 5000, type: "direct", date: new Date(new Date().setDate(new Date().getDate() - 35)) }, ], revenuePayments: [ { description: "Phase 1", amount: 75000, date: new Date(new Date().setDate(new Date().getDate() - 160)) }, { description: "Phase 2", amount: 75000, date: new Date(new Date().setDate(new Date().getDate() - 110)) }, { description: "Final Payment", amount: 70000, date: new Date(new Date().setDate(new Date().getDate() - 30)) }, ], partners: [] },
-                { id: "proj3", name: "Data Analytics Dashboard", client: "HealthFirst Corp", projectLead: "Alice Johnson", totalContractValue: 85000, status: "in-progress", startDate: "2025-06-11", endDate: "2025-12-08", paymentFrequency: "quarterly", createdAt: new Date(new Date().setDate(new Date().getDate() - 60)), expenses: [ { description: "Data Scientist (Contractor)", amount: 18000, type: "outsourced", date: new Date(new Date().setDate(new Date().getDate() - 50)) }, { description: "Data Visualization Software", amount: 4000, type: "direct", date: new Date(new Date().setDate(new Date().getDate() - 45)) }, ], revenuePayments: [ { description: "Q1 Payment", amount: 42500, date: new Date(new Date().setDate(new Date().getDate() - 58)) }, ], partners: [] },
-                { id: "proj4", name: "Mobile App Development", client: "Startup Hub", projectLead: "Charlie Brown", totalContractValue: 75000, status: "planning", startDate: "2025-08-25", endDate: "2025-11-23", paymentFrequency: "monthly", createdAt: new Date(new Date().setDate(new Date().getDate() - 15)), expenses: [ { description: "Market Research", amount: 2500, type: "direct", date: new Date(new Date().setDate(new Date().getDate() - 10)) }, ], revenuePayments: [ { description: "Initial Retainer", amount: 15000, date: new Date(new Date().setDate(new Date().getDate() - 12)) }, ], partners: [] },
-                { id: "proj5", name: "Cloud Migration", client: "Legacy Systems Ltd.", projectLead: "Bob Williams", totalContractValue: 120000, status: "on-hold", startDate: "2025-04-12", endDate: "2025-09-09", paymentFrequency: "milestone", createdAt: new Date(new Date().setDate(new Date().getDate() - 120)), expenses: [ { description: "Infrastructure Audit", amount: 8000, type: "direct", date: new Date(new Date().setDate(new Date().getDate() - 115)) }, ], revenuePayments: [ { description: "Discovery Phase Payment", amount: 25000, date: new Date(new Date().setDate(new Date().getDate() - 118)) }, ], partners: [] },
-                { id: "proj6", name: "Project Phoenix", client: "Omni Consumer Products", projectLead: "Diana Prince", totalContractValue: 500000, status: "in-progress", startDate: "2024-12-03", endDate: "2025-12-03", paymentFrequency: "monthly", createdAt: new Date(new Date().setDate(new Date().getDate() - 250)), expenses: [ { description: "R&D Team Salaries", amount: 150000, type: "direct", date: new Date(new Date().setDate(new Date().getDate() - 240)) }, { description: "Specialized Hardware", amount: 75000, type: "direct", date: new Date(new Date().setDate(new Date().getDate() - 230)) }, { description: "External Security Consultants", amount: 45000, type: "outsourced", date: new Date(new Date().setDate(new Date().getDate() - 200)) }, { description: "Operational Costs (Y1)", amount: 25000, type: "direct", date: new Date(new Date().setDate(new Date().getDate() - 150)) }, ], revenuePayments: [ { description: "Seed Funding", amount: 250000, date: new Date(new Date().setDate(new Date().getDate() - 245)) }, { description: "Milestone Alpha", amount: 125000, date: new Date(new Date().setDate(new Date().getDate() - 180)) }, ], partners: [] },
-            ];
+            let db, projectsCollectionRef;
 
-            let localProjects = JSON.parse(JSON.stringify(SEED_DATA_SOURCE));
-
-            const notifyDataChange = () => {
-                window.dispatchEvent(new CustomEvent('dataChanged', { detail: { projects: getProjects() } }));
-            };
-
-            const getProjects = () => {
-                const projectsWithDates = localProjects.map(p => ({
-                    ...p,
-                    createdAt: new Date(p.createdAt),
-                    expenses: (p.expenses || []).map(e => ({...e, date: new Date(e.date)})),
-                    revenuePayments: (p.revenuePayments || []).map(r => ({...r, date: new Date(r.date)})),
-                    partners: p.partners || []
-                }));
-                return projectsWithDates.sort((a, b) => b.createdAt - a.createdAt);
-            };
-
-            const addProject = (projectData) => {
-                const newProject = {
-                    ...projectData,
-                    id: `proj${Date.now()}`,
-                    createdAt: new Date().toISOString(),
-                    expenses: [],
-                    revenuePayments: [],
-                    partners: []
-                };
-                localProjects.unshift(newProject);
-                notifyDataChange();
-            };
+            function init(firestore, collectionRef) {
+                db = firestore;
+                projectsCollectionRef = collectionRef;
+            }
             
-            const addMultipleProjects = (projectsData) => {
-                const newProjects = projectsData.map((projectData, index) => ({
-                    ...projectData,
-                    id: `proj${Date.now()}${index}`, // Ensure unique ID
-                    createdAt: new Date().toISOString(),
-                    // Ensure expenses/revenue are arrays even if not provided
-                    expenses: projectData.expenses || [],
-                    revenuePayments: projectData.revenuePayments || [],
-                    partners: projectData.partners || []
-                }));
-                // Add new projects to the beginning of the list
-                localProjects.unshift(...newProjects);
-                notifyDataChange();
+            const getProjects = () => {
+                return new Promise((resolve, reject) => {
+                    const q = query(projectsCollectionRef, orderBy("createdAt", "desc"));
+                    const unsubscribe = onSnapshot(q, (querySnapshot) => {
+                        const projects = [];
+                        querySnapshot.forEach((doc) => {
+                            const data = doc.data();
+                            // Convert Firestore Timestamps to JS Dates
+                            const projectWithDates = {
+                                ...data,
+                                id: doc.id,
+                                createdAt: data.createdAt?.toDate(),
+                                expenses: (data.expenses || []).map(e => ({...e, date: e.date?.toDate()})),
+                                revenuePayments: (data.revenuePayments || []).map(r => ({...r, date: r.date?.toDate()})),
+                            };
+                            projects.push(projectWithDates);
+                        });
+                        window.dispatchEvent(new CustomEvent('dataChanged', { detail: { projects } }));
+                    }, reject);
+                });
             };
 
-            const updateProject = (projectId, dataToUpdate) => {
-                const projectIndex = localProjects.findIndex(p => p.id === projectId);
-                if (projectIndex > -1) {
-                    localProjects[projectIndex] = { ...localProjects[projectIndex], ...dataToUpdate };
-                    notifyDataChange();
+            const addProject = async (projectData) => {
+                try {
+                    await addDoc(projectsCollectionRef, {
+                        ...projectData,
+                        createdAt: serverTimestamp(),
+                        expenses: [],
+                        revenuePayments: [],
+                        partners: []
+                    });
+                    App.notify.show('Project added successfully!', 'success');
+                } catch (e) {
+                    console.error("Error adding document: ", e);
+                    App.notify.show('Failed to add project.', 'danger');
                 }
             };
             
-            const deleteProject = (projectId) => {
-                localProjects = localProjects.filter(p => p.id !== projectId);
-                notifyDataChange();
+            const addMultipleProjects = async (projectsData) => {
+                 const batch = writeBatch(db);
+                 projectsData.forEach((projectData) => {
+                    const newDocRef = doc(projectsCollectionRef);
+                    batch.set(newDocRef, {
+                         ...projectData,
+                         createdAt: serverTimestamp(),
+                         expenses: projectData.expenses || [],
+                         revenuePayments: projectData.revenuePayments || [],
+                         partners: projectData.partners || []
+                    });
+                 });
+                 try {
+                    await batch.commit();
+                    App.notify.show(`Successfully imported ${projectsData.length} projects!`, 'success');
+                 } catch(e) {
+                    console.error("Error adding multiple projects: ", e);
+                    App.notify.show('Failed to import projects.', 'danger');
+                 }
             };
 
-            const seedDatabase = () => {
-                localProjects = JSON.parse(JSON.stringify(SEED_DATA_SOURCE));
-                notifyDataChange();
+            const updateProject = async (projectId, dataToUpdate) => {
+                const projectRef = doc(db, projectsCollectionRef.path, projectId);
+                try {
+                    await setDoc(projectRef, dataToUpdate, { merge: true });
+                    // No notification here, as sub-item updates are frequent.
+                } catch (e) {
+                    console.error("Error updating document: ", e);
+                    App.notify.show('Failed to update project.', 'danger');
+                }
+            };
+            
+            const deleteProject = async (projectId) => {
+                const projectRef = doc(db, projectsCollectionRef.path, projectId);
+                try {
+                    await deleteDoc(projectRef);
+                    App.notify.show('Project deleted successfully.', 'success');
+                } catch(e) {
+                    console.error("Error deleting document: ", e);
+                    App.notify.show('Failed to delete project.', 'danger');
+                }
             };
 
-            return { getProjects, addProject, updateProject, deleteProject, seedDatabase, addMultipleProjects };
+            const seedDatabase = async () => {
+                const SEED_DATA_SOURCE = [
+                     { id: "proj1", name: "InnovateX Platform", client: "Tech Solutions Inc.", projectLead: "Alice Johnson", totalContractValue: 150000, status: "in-progress", startDate: "2025-05-12", endDate: "2025-11-08", paymentFrequency: "monthly", expenses: [ { description: "Cloud Hosting (Q1)", amount: 3000, type: "direct", date: new Date(new Date().setDate(new Date().getDate() - 85)) }, { description: "UX/UI Design Services", amount: 12000, type: "outsourced", date: new Date(new Date().setDate(new Date().getDate() - 80)) }, { description: "Software Licenses", amount: 1500, type: "direct", date: new Date(new Date().setDate(new Date().getDate() - 70)) }, { description: "Cloud Hosting (Q2)", amount: 3000, type: "direct", date: new Date(new Date().setDate(new Date().getDate() - 10)) }, ], revenuePayments: [ { description: "Initial Deposit", amount: 30000, date: new Date(new Date().setDate(new Date().getDate() - 88)) }, { description: "Milestone 1 Payment", amount: 45000, date: new Date(new Date().setDate(new Date().getDate() - 55)) }, { description: "Milestone 2 Payment", amount: 45000, date: new Date(new Date().setDate(new Date().getDate() - 20)) }, ], partners: [ { id: 'partner1', name: 'Design Wizards LLC', role: 'UX/UI Design', cost: 12000 } ] },
+                     { id: "proj2", name: "E-Commerce Overhaul", client: "Global Retail Co.", projectLead: "Bob Williams", totalContractValue: 220000, status: "completed", startDate: "2025-02-11", endDate: "2025-07-11", paymentFrequency: "milestone", expenses: [ { description: "Development Team (Internal)", amount: 60000, type: "direct", date: new Date(new Date().setDate(new Date().getDate() - 170)) }, { description: "Payment Gateway Integration", amount: 7500, type: "outsourced", date: new Date(new Date().setDate(new Date().getDate() - 150)) }, { description: "QA Testing Services", amount: 15000, type: "outsourced", date: new Date(new Date().setDate(new Date().getDate() - 100)) }, { description: "Final Deployment Support", amount: 5000, type: "direct", date: new Date(new Date().setDate(new Date().getDate() - 35)) }, ], revenuePayments: [ { description: "Phase 1", amount: 75000, date: new Date(new Date().setDate(new Date().getDate() - 160)) }, { description: "Phase 2", amount: 75000, date: new Date(new Date().setDate(new Date().getDate() - 110)) }, { description: "Final Payment", amount: 70000, date: new Date(new Date().setDate(new Date().getDate() - 30)) }, ], partners: [] },
+                     { id: "proj3", name: "Data Analytics Dashboard", client: "HealthFirst Corp", projectLead: "Alice Johnson", totalContractValue: 85000, status: "in-progress", startDate: "2025-06-11", endDate: "2025-12-08", paymentFrequency: "quarterly", expenses: [ { description: "Data Scientist (Contractor)", amount: 18000, type: "outsourced", date: new Date(new Date().setDate(new Date().getDate() - 50)) }, { description: "Data Visualization Software", amount: 4000, type: "direct", date: new Date(new Date().setDate(new Date().getDate() - 45)) }, ], revenuePayments: [ { description: "Q1 Payment", amount: 42500, date: new Date(new Date().setDate(new Date().getDate() - 58)) }, ], partners: [] },
+                ];
+                const batch = writeBatch(db);
+                SEED_DATA_SOURCE.forEach(project => {
+                    const docRef = doc(projectsCollectionRef, project.id);
+                    batch.set(docRef, {...project, createdAt: serverTimestamp()});
+                });
+                await batch.commit();
+                App.notify.show('Demo data has been seeded!', 'success');
+            };
+
+
+            return { init, getProjects, addProject, updateProject, deleteProject, seedDatabase, addMultipleProjects };
         })();
         
         // --- Module: CSV Import Service ---
@@ -1095,12 +1181,17 @@
                 importBtn.addEventListener('click', () => fileInput.click());
                 fileInput.addEventListener('change', handleFileSelect);
             }
+            
+            function parseCurrency(value) {
+                if (typeof value !== 'string') return 0;
+                // Remove "R", commas, and trim whitespace, then parse as float
+                return parseFloat(value.replace(/R|,/g, '').trim()) || 0;
+            }
 
             function handleFileSelect(event) {
                 const file = event.target.files[0];
                 if (!file) return;
 
-                // Use PapaParse to read the CSV file
                 Papa.parse(file, {
                     header: true,
                     skipEmptyLines: true,
@@ -1112,51 +1203,57 @@
                         App.notify.show('Failed to parse CSV file. Check console for details.', 'danger');
                     }
                 });
-                // Reset file input to allow re-uploading the same file if needed
                 event.target.value = '';
             }
 
             function processData(data) {
                 console.log("Parsed CSV data:", data);
                 const newProjects = data.map(row => {
-                    // Map CSV columns to the application's data structure
-                    const contractValue = parseFloat(row.Contract_Value_ZAR) || 0;
-                    const projectCost = parseFloat(row['Project cost']) || 0;
-                    
-                    // Basic validation: skip rows without a project name
-                    if (!row.Project_Name) {
+                    if (!row.Project_Name || row.Project_Name.toLowerCase().includes('total amount')) {
                         return null;
                     }
+                    
+                    const contractValue = parseCurrency(row.Contract_Value_ZAR);
+                    const projectCost = parseCurrency(row['Project cost']);
 
                     const newProject = {
                         name: row.Project_Name,
                         client: row.Client || 'Unknown Client',
-                        projectLead: 'Imported Lead', // Default value as it's not in the CSV
+                        projectLead: 'Imported Lead',
                         totalContractValue: contractValue,
                         startDate: row.Start_Date ? new Date(row.Start_Date).toISOString() : new Date().toISOString(),
                         endDate: row.End_Date ? new Date(row.End_Date).toISOString() : new Date().toISOString(),
-                        // Sanitize status to match app's values
                         status: (row.Status || 'planning').toLowerCase().replace(/\s+/g, '-').replace('inprogress', 'in-progress'),
-                        paymentFrequency: 'milestone', // Default value
+                        paymentFrequency: 'milestone',
                         expenses: [],
                         revenuePayments: []
                     };
 
-                    // If there's a project cost, add it as an initial expense
                     if (projectCost > 0) {
                         newProject.expenses.push({
-                            description: 'Initial Imported Cost',
+                            description: 'Imported Project Cost',
                             amount: projectCost,
                             type: 'direct', // Assumption
-                            date: newProject.startDate
+                            date: new Date(newProject.startDate)
                         });
                     }
+                    
+                    // To make the profit match, we add a revenue payment equal to the cost + profit from the CSV
+                    // Since Profit = Contract Value - Cost, then Cost + Profit = Contract Value.
+                    // So we add the full contract value as an initial received payment.
+                    if (contractValue > 0) {
+                         newProject.revenuePayments.push({
+                            description: 'Imported Contract Value',
+                            amount: contractValue,
+                            date: new Date(newProject.startDate)
+                        });
+                    }
+
                     return newProject;
-                }).filter(p => p !== null); // Filter out any invalid rows
+                }).filter(p => p !== null);
 
                 if (newProjects.length > 0) {
                     App.dataService.addMultipleProjects(newProjects);
-                    App.notify.show(`Successfully imported ${newProjects.length} projects!`, 'success');
                 } else {
                     App.notify.show('No valid projects with a name were found in the file.', 'warning');
                 }
@@ -1183,7 +1280,6 @@
                 if (!date) return 'N/A';
                 const d = date instanceof Date ? date : new Date(date);
                 if (isNaN(d.getTime())) return 'Invalid Date';
-                // Adjust for timezone offset to prevent date from shifting
                 const adjustedDate = new Date(d.getTime() + d.getTimezoneOffset() * 60000);
                 return adjustedDate.toLocaleDateString('en-CA', { year: 'numeric', month: 'short', day: 'numeric' });
             }
@@ -1833,6 +1929,7 @@
                 ];
 
                 allTransactions.forEach(item => {
+                    if (!item.date) return;
                     const date = new Date(item.date);
                     const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
                     if (!monthlyData[monthKey]) {
@@ -1892,6 +1989,9 @@
                 modalContainer.classList.add('modal-container-hidden');
                 modalContainer.classList.remove('modal-container-visible');
                 modalContainer.innerHTML = '';
+                 if (modalContainer.dataset.currentProjectId) {
+                    delete modalContainer.dataset.currentProjectId;
+                }
             }
 
             function showAddProjectModal() {
@@ -1914,7 +2014,24 @@
             }
 
             function showProjectDetailsModal(project) {
+                modalContainer.dataset.currentProjectId = project.id;
+                const activeTab = modalContainer.querySelector('.tab-link.active')?.dataset.tab || 'tab-revenue';
+                
                 showModal(getProjectDetailsModalHTML(project));
+                
+                // Restore the active tab
+                document.querySelectorAll('.tab-link').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                const tabToActivate = document.querySelector(`.tab-link[data-tab="${activeTab}"]`);
+                if(tabToActivate) {
+                    tabToActivate.classList.add('active');
+                    document.getElementById(activeTab).classList.add('active');
+                } else {
+                    // Default to first tab if previous active tab not found
+                    document.querySelector('.tab-link').classList.add('active');
+                    document.querySelector('.tab-content').classList.add('active');
+                }
+
                 setupDetailsModalEventListeners(project);
             }
             
@@ -1926,8 +2043,7 @@
                      document.body.innerHTML = reportContent;
                      window.print();
                      document.body.innerHTML = originalContent;
-                     // We need to re-initialize the app after printing to restore event listeners
-                     initializeApp();
+                     startApp(); // Re-initialize app to restore listeners
                 });
             }
             
@@ -1977,17 +2093,19 @@
                 };
                 const updatedPartners = [...(project.partners || []), newPartner];
                 updateProject(project.id, { partners: updatedPartners });
+                // Don't close modal, let the live update handle it
             }
 
             function handleAddSubItem(e, project, type) {
                 e.preventDefault();
                 const form = e.target;
                 const newItem = {
-                    description: form.description.value, amount: parseFloat(form.amount.value), date: form.date.value,
+                    description: form.description.value, amount: parseFloat(form.amount.value), date: new Date(form.date.value),
                 };
                 if (type === 'expenses') newItem.type = form.type.value;
                 const updatedItems = [...(project[type] || []), newItem];
                 updateProject(project.id, { [type]: updatedItems });
+                // Don't close modal, let the live update handle it
             }
 
             function handleDeleteSubItem(e, project, type) {
@@ -2362,12 +2480,10 @@
         
         App.reports = (() => {
             const { showReportModal } = App.modal;
-            const { getProjects } = App.dataService;
             const { calculateProjectMetrics } = App.calculations;
             const { formatCurrency, formatDate } = App.helpers;
 
-            function generate(reportType, projectId) {
-                const projects = getProjects();
+            function generate(projects, reportType, projectId) {
                 let title = '';
                 let content = '';
 
@@ -2476,8 +2592,10 @@
         
         App.pages.reports = (() => {
             const { getReportsHTML } = App.templates;
+            let currentProjects = [];
 
             function render(projects) {
+                currentProjects = projects;
                 const appContent = document.getElementById('app-content');
                 appContent.innerHTML = getReportsHTML(projects);
 
@@ -2493,7 +2611,7 @@
                     const reportType = reportTypeSelect.value;
                     const projectSelect = document.getElementById('project-select');
                     const projectId = projectSelect.value;
-                    App.reports.generate(reportType, projectId);
+                    App.reports.generate(currentProjects, reportType, projectId);
                 });
             }
             return { render };
@@ -2521,13 +2639,25 @@
                 '#team': 'Team Overview', '#reports': 'Generate Reports',
             };
 
-            function initRouter(initialProjects) {
-                currentProjects = initialProjects;
+            function initRouter() {
                 window.addEventListener('hashchange', () => handleRouteChange(currentProjects));
                 window.addEventListener('dataChanged', (e) => {
                     console.log('Router detected data change. Re-rendering view.');
-                    currentProjects = e.detail.projects;
-                    handleRouteChange(currentProjects);
+                    const newProjects = e.detail.projects;
+                    currentProjects = newProjects;
+                    handleRouteChange(newProjects);
+
+                    // Check if a project details modal is open and needs refreshing
+                    const modalContainer = document.getElementById('modal-container');
+                    if (modalContainer.classList.contains('modal-container-visible') && modalContainer.dataset.currentProjectId) {
+                        const updatedProject = newProjects.find(p => p.id === modalContainer.dataset.currentProjectId);
+                        if (updatedProject) {
+                            App.modal.showProjectDetailsModal(updatedProject);
+                        } else {
+                            // The project was deleted, so close the modal
+                            App.modal.closeModal();
+                        }
+                    }
                 });
             }
 
@@ -2546,7 +2676,6 @@
                 updateActiveNavLinks(hash);
                 document.getElementById('page-title').textContent = pageTitles[hash] || 'Dashboard';
                 
-                // Hide/show the "Add Project" button based on the page
                 const addProjectBtn = document.getElementById('add-project-btn');
                 const importCsvBtn = document.getElementById('import-csv-btn');
                 
@@ -2563,7 +2692,7 @@
             }
 
             function updateActiveNavLinks(hash) {
-                const page = hash.substring(1);
+                const page = (hash || '#dashboard').substring(1);
                 document.querySelectorAll('.sidebar-nav .nav-link, .mobile-nav .mobile-nav-link').forEach(link => {
                     link.classList.toggle('active', link.dataset.page === page);
                 });
@@ -2572,9 +2701,9 @@
             return { initRouter, navigateTo };
         })();
         
-        function initializeApp() {
-             console.log("BITS App Initializing (Local Version)...");
-            const loadingOverlay = document.getElementById('loading-overlay');
+        async function startApp() {
+             console.log("BITS App Initializing...");
+             const loadingOverlay = document.getElementById('loading-overlay');
             
             // Initialize UI that doesn't depend on data
             const themeToggleDesktop = document.getElementById('theme-toggle-desktop');
@@ -2600,28 +2729,42 @@
                 }
             });
 
-            // Get initial data
-            const initialProjects = App.dataService.getProjects();
-            
-            // Initialize router and modals
-            App.router.initRouter(initialProjects);
-            App.modal.initModal();
-            App.exportService.init();
-            App.importService.init();
+            try {
+                // Initialize Firebase and wait for auth
+                const { auth, db, userId, projectsCollectionRef } = await App.firebase.init();
 
-            // Initial Page Load
-            const initialHash = window.location.hash || '#dashboard';
-            App.router.navigateTo(initialProjects, initialHash);
+                // Initialize services that depend on Firebase
+                App.dataService.init(db, projectsCollectionRef);
+                
+                // Initialize router and modals
+                App.router.initRouter();
+                App.modal.initModal();
+                App.exportService.init();
+                App.importService.init();
 
-            // Hide loading overlay
-            setTimeout(() => {
-                if(loadingOverlay) loadingOverlay.classList.add('hidden');
-                console.log("BITS App Ready!");
-            }, 250); // Small delay to ensure first paint
+                // Start listening for project changes, which will trigger the first render
+                App.dataService.getProjects();
+
+                // Initial Page Load Navigation
+                const initialHash = window.location.hash || '#dashboard';
+                // The onSnapshot listener will provide the initial data, so we don't need to pass it here.
+                App.router.navigateTo([], initialHash);
+
+
+            } catch (error) {
+                console.error("Failed to initialize the application:", error);
+                App.notify.show(error.message || 'An unknown error occurred during startup.', 'danger', 10000);
+            } finally {
+                // Hide loading overlay
+                setTimeout(() => {
+                    if(loadingOverlay) loadingOverlay.classList.add('hidden');
+                    console.log("BITS App Ready!");
+                }, 500); // Give a bit of time for the first data to arrive
+            }
         }
 
         // --- Main Application Entry Point ---
-        document.addEventListener('DOMContentLoaded', initializeApp);
+        document.addEventListener('DOMContentLoaded', startApp);
     </script>
 </body>
 </html>

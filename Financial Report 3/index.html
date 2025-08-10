@@ -297,6 +297,11 @@
             font-weight: 800;
         }
 
+        .header-actions {
+            display: flex;
+            gap: 1rem;
+        }
+
         .mobile-nav {
             display: none;
         }
@@ -304,6 +309,40 @@
         /* ------------------------- */
         /* Components                */
         /* ------------------------- */
+
+        /* Dropdown for Export */
+        .dropdown {
+            position: relative;
+            display: inline-block;
+        }
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            right: 0;
+            background-color: var(--bg-secondary);
+            backdrop-filter: blur(20px);
+            min-width: 160px;
+            box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+            z-index: 1;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            overflow: hidden;
+        }
+        .dropdown-content a {
+            color: var(--text-primary);
+            padding: 12px 16px;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .dropdown-content a:hover {
+            background-color: var(--bg-tertiary);
+        }
+        .dropdown:hover .dropdown-content {
+            display: block;
+        }
+
 
         /* Buttons */
         .btn {
@@ -849,7 +888,17 @@
         <main class="main-content">
             <header class="main-header">
                 <h2 id="page-title">Dashboard</h2>
-                <button id="add-project-btn" class="btn btn-primary"><i data-lucide="plus"></i> Add Project</button>
+                <div class="header-actions">
+                    <div class="dropdown">
+                        <button id="export-btn" class="btn btn-secondary"><i data-lucide="download"></i> Export</button>
+                        <div class="dropdown-content">
+                            <a href="#" id="export-png"><i data-lucide="image"></i>PNG</a>
+                            <a href="#" id="export-pdf"><i data-lucide="file-text"></i>PDF</a>
+                            <a href="#" id="export-csv"><i data-lucide="sheet"></i>CSV</a>
+                        </div>
+                    </div>
+                    <button id="add-project-btn" class="btn btn-primary"><i data-lucide="plus"></i> Add Project</button>
+                </div>
             </header>
             <div id="app-content">
                 <!-- Dynamic content will be rendered here -->
@@ -870,6 +919,8 @@
     <div id="modal-container" class="modal-container-hidden"></div>
     
     <!-- External Libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
@@ -1673,6 +1724,105 @@
             return { initModal, showProjectDetailsModal };
         })();
         
+        // --- Module: Export Service ---
+        App.exportService = (() => {
+            const { jsPDF } = window.jspdf;
+
+            function showLoading(isExporting) {
+                const btn = document.getElementById('export-btn');
+                if (isExporting) {
+                    btn.innerHTML = `<i data-lucide="loader-2" class="spinner-icon"></i> Exporting...`;
+                    const spinnerIcon = btn.querySelector('.spinner-icon');
+                    if (spinnerIcon) {
+                        spinnerIcon.style.animation = 'spin 1s linear infinite';
+                    }
+                } else {
+                    btn.innerHTML = `<i data-lucide="download"></i> Export`;
+                }
+                lucide.createIcons();
+            }
+
+            async function exportToPNG(element, fileName) {
+                showLoading(true);
+                try {
+                    const canvas = await html2canvas(element, { useCORS: true, backgroundColor: null });
+                    const link = document.createElement('a');
+                    link.download = `${fileName}.png`;
+                    link.href = canvas.toDataURL('image/png');
+                    link.click();
+                } catch (error) {
+                    console.error('Error exporting to PNG:', error);
+                } finally {
+                    showLoading(false);
+                }
+            }
+
+            async function exportToPDF(element, fileName) {
+                showLoading(true);
+                try {
+                    const canvas = await html2canvas(element, { useCORS: true, backgroundColor: null });
+                    const imgData = canvas.toDataURL('image/png');
+                    const pdf = new jsPDF({
+                        orientation: 'landscape',
+                        unit: 'px',
+                        format: [canvas.width, canvas.height]
+                    });
+                    pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
+                    pdf.save(`${fileName}.pdf`);
+                } catch (error) {
+                    console.error('Error exporting to PDF:', error);
+                } finally {
+                    showLoading(false);
+                }
+            }
+
+            function exportToCSV(element, fileName) {
+                const table = element.querySelector('.custom-table');
+                if (!table) {
+                    alert('No data table found on this page to export.');
+                    return;
+                }
+
+                let csv = [];
+                const headers = Array.from(table.querySelectorAll('thead th')).map(th => `"${th.textContent.trim()}"`).join(',');
+                csv.push(headers);
+
+                table.querySelectorAll('tbody tr').forEach(row => {
+                    const rowData = Array.from(row.querySelectorAll('td')).map(td => `"${td.textContent.trim()}"`).join(',');
+                    csv.push(rowData);
+                });
+
+                const csvContent = 'data:text/csv;charset=utf-8,' + csv.join('\n');
+                const encodedUri = encodeURI(csvContent);
+                const link = document.createElement('a');
+                link.setAttribute('href', encodedUri);
+                link.setAttribute('download', `${fileName}.csv`);
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            }
+            
+            function init() {
+                document.getElementById('export-png').addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const pageTitle = document.getElementById('page-title').textContent.replace(/\s+/g, '-');
+                    exportToPNG(document.getElementById('app-content'), `BITS-${pageTitle}`);
+                });
+                document.getElementById('export-pdf').addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const pageTitle = document.getElementById('page-title').textContent.replace(/\s+/g, '-');
+                    exportToPDF(document.getElementById('app-content'), `BITS-${pageTitle}`);
+                });
+                document.getElementById('export-csv').addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const pageTitle = document.getElementById('page-title').textContent.replace(/\s+/g, '-');
+                    exportToCSV(document.getElementById('app-content'), `BITS-${pageTitle}`);
+                });
+            }
+
+            return { init };
+        })();
+
         // --- Page Modules ---
         App.pages = {};
         App.pages.dashboard = (() => {
@@ -2056,6 +2206,7 @@
             // Initialize router and modals
             App.router.initRouter(initialProjects);
             App.modal.initModal();
+            App.exportService.init();
 
             // Initial Page Load
             const initialHash = window.location.hash || '#dashboard';

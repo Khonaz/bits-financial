@@ -17,9 +17,9 @@
             /* Dark Theme (Default) - Enhanced Gradient Feel */
             --bg-primary-start: #000000;
             --bg-primary-end: #1c1c2e;
-            --bg-secondary: rgba(22, 27, 34, 0.6);
-            --bg-tertiary: rgba(43, 48, 58, 0.5);
-            --bg-header: rgba(13, 17, 23, 0.5);
+            --bg-secondary: rgba(22, 27, 34, 0.95);
+            --bg-tertiary: rgba(43, 48, 58, 0.7);
+            --bg-header: rgba(13, 17, 23, 0.85);
             --text-primary: #e6edf3;
             --text-secondary: #8d96a0;
             --accent-primary-start: #4A90E2;
@@ -37,24 +37,24 @@
         }
 
         body.light-mode {
-            /* Light Theme - Enhanced Gradient Feel */
-            --bg-primary-start: #e9eef2;
-            --bg-primary-end: #ffffff;
-            --bg-secondary: rgba(255, 255, 255, 0.6);
-            --bg-tertiary: rgba(240, 242, 245, 0.7);
-            --bg-header: rgba(255, 255, 255, 0.5);
-            --text-primary: #1f2328;
-            --text-secondary: #57606a;
-            --accent-primary-start: #0969da;
-            --accent-primary-end: #0550ae;
-            --accent-secondary-start: #1a7f37;
-            --accent-secondary-end: #125a27;
-            --border-color: rgba(31, 35, 40, 0.1);
-            --shadow-color: rgba(0, 0, 0, 0.1);
-            --success: #1a7f37;
-            --danger: #cf222e;
-            --warning: #9a6700;
-            --info: #0969da;
+            /* Professional Light Theme */
+            --bg-primary-start: #F8F9FA;
+            --bg-primary-end: #FFFFFF;
+            --bg-secondary: #FFFFFF;
+            --bg-tertiary: #F1F3F5;
+            --bg-header: rgba(255, 255, 255, 0.85);
+            --text-primary: #212529;
+            --text-secondary: #6C757D;
+            --accent-primary-start: #0052D4;
+            --accent-primary-end: #4361EE;
+            --accent-secondary-start: #00B4D8;
+            --accent-secondary-end: #90E0EF;
+            --border-color: #DEE2E6;
+            --shadow-color: rgba(0, 0, 0, 0.05);
+            --success: #28A745;
+            --danger: #DC3545;
+            --warning: #FFC107;
+            --info: #17A2B8;
         }
 
         /* ------------------------- */
@@ -68,7 +68,7 @@
 
         body {
             font-family: var(--font-family);
-            background: linear-gradient(135deg, var(--bg-primary-start), var(--bg-primary-end));
+            background: var(--bg-primary-start);
             color: var(--text-primary);
             transition: background 0.3s, color 0.3s;
             font-size: 16px;
@@ -100,7 +100,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: linear-gradient(135deg, var(--bg-primary-start), var(--bg-primary-end));
+            background: var(--bg-primary-start);
             display: flex;
             flex-direction: column;
             justify-content: center;
@@ -142,7 +142,7 @@
         }
 
         .notification {
-            background-color: var(--bg-tertiary);
+            background-color: var(--bg-secondary);
             color: var(--text-primary);
             padding: 1rem 1.5rem;
             border-radius: 8px;
@@ -183,7 +183,6 @@
         .sidebar {
             width: 260px;
             background-color: var(--bg-secondary);
-            backdrop-filter: blur(25px);
             padding: 1.5rem;
             display: flex;
             flex-direction: column;
@@ -239,7 +238,7 @@
             background: linear-gradient(90deg, var(--accent-primary-start), var(--accent-primary-end));
             color: #fff;
             font-weight: 600;
-            box-shadow: 0 0 20px rgba(74, 144, 226, 0.4);
+            box-shadow: 0 4px 12px rgba(0, 82, 212, 0.2);
         }
 
         .sidebar-footer {
@@ -270,7 +269,7 @@
             position: absolute;
             cursor: pointer;
             top: 0; left: 0; right: 0; bottom: 0;
-            background-color: var(--bg-primary-start);
+            background-color: var(--border-color);
             transition: .4s;
         }
         .slider:before {
@@ -281,7 +280,7 @@
             background-color: white;
             transition: .4s;
         }
-        input:checked + .slider { background: linear-gradient(90deg, var(--accent-secondary-start), var(--accent-secondary-end)); }
+        input:checked + .slider { background: linear-gradient(90deg, var(--accent-primary-start), var(--accent-primary-end)); }
         input:checked + .slider:before { transform: translateX(20px); }
         .slider.round { border-radius: 20px; }
         .slider.round:before { border-radius: 50%; }
@@ -352,9 +351,8 @@
             position: absolute;
             right: 0;
             background-color: var(--bg-secondary);
-            backdrop-filter: blur(20px);
             min-width: 160px;
-            box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+            box-shadow: 0 8px 16px var(--shadow-color);
             z-index: 1;
             border-radius: 8px;
             border: 1px solid var(--border-color);
@@ -387,7 +385,7 @@
             display: inline-flex;
             align-items: center;
             gap: 0.5rem;
-            background-color: var(--bg-tertiary);
+            background-color: var(--bg-secondary);
             color: var(--text-primary);
         }
         .btn:disabled {
@@ -398,22 +396,22 @@
             background: linear-gradient(90deg, var(--accent-primary-start), var(--accent-primary-end));
             color: #fff;
             border-color: transparent;
-            box-shadow: 0 0 15px rgba(74, 144, 226, 0.3);
+            box-shadow: 0 4px 12px rgba(0, 82, 212, 0.2);
         }
         .btn-primary:hover:not(:disabled) {
             transform: translateY(-2px);
-            box-shadow: 0 4px 20px rgba(74, 144, 226, 0.5);
+            box-shadow: 0 6px 16px rgba(0, 82, 212, 0.3);
         }
         .btn-secondary:hover:not(:disabled) {
-            background-color: var(--border-color);
+            background-color: var(--bg-tertiary);
         }
         .btn-danger {
-            background: #F85149;
+            background: var(--danger);
             color: #fff;
             border-color: transparent;
         }
         .btn-success {
-            background: #3FB950;
+            background: var(--success);
             color: #fff;
             border-color: transparent;
         }
@@ -427,8 +425,7 @@
             margin-bottom: 2rem;
         }
         .kpi-card {
-            background: linear-gradient(145deg, rgba(255,255,255,0.05), rgba(255,255,255,0));
-            backdrop-filter: blur(20px);
+            background: var(--bg-secondary);
             padding: 1.5rem;
             border-radius: 12px;
             border: 1px solid var(--border-color);
@@ -458,10 +455,10 @@
             width: 20px;
             height: 20px;
         }
-        .kpi-icon-revenue { background-color: rgba(63, 185, 80, 0.1); color: var(--success); }
-        .kpi-icon-costs { background-color: rgba(248, 81, 73, 0.1); color: var(--danger); }
-        .kpi-icon-profit { background-color: rgba(88, 166, 255, 0.1); color: var(--info); }
-        .kpi-icon-projects { background-color: rgba(210, 153, 34, 0.1); color: var(--warning); }
+        .kpi-icon-revenue { background-color: rgba(40, 167, 69, 0.1); color: var(--success); }
+        .kpi-icon-costs { background-color: rgba(220, 53, 69, 0.1); color: var(--danger); }
+        .kpi-icon-profit { background-color: rgba(23, 162, 184, 0.1); color: var(--info); }
+        .kpi-icon-projects { background-color: rgba(255, 193, 7, 0.1); color: var(--warning); }
 
         .kpi-value {
             font-size: 2.25rem;
@@ -475,8 +472,7 @@
 
         /* Charts */
         .chart-container {
-            background: linear-gradient(145deg, rgba(255,255,255,0.05), rgba(255,255,255,0));
-            backdrop-filter: blur(20px);
+            background: var(--bg-secondary);
             padding: 1.5rem;
             border-radius: 12px;
             border: 1px solid var(--border-color);
@@ -500,8 +496,7 @@
 
         /* Tables */
         .table-container {
-            background: linear-gradient(145deg, rgba(255,255,255,0.05), rgba(255,255,255,0));
-            backdrop-filter: blur(20px);
+            background: var(--bg-secondary);
             padding: 1rem;
             border-radius: 12px;
             border: 1px solid var(--border-color);
@@ -547,10 +542,10 @@
             text-transform: capitalize;
             display: inline-block;
         }
-        .status-planning { background-color: rgba(88, 166, 255, 0.2); color: var(--info); }
-        .status-in-progress { background-color: rgba(210, 153, 34, 0.2); color: var(--warning); }
-        .status-completed { background-color: rgba(63, 185, 80, 0.2); color: var(--success); }
-        .status-on-hold { background-color: rgba(125, 133, 144, 0.2); color: var(--text-secondary); }
+        .status-planning { background-color: rgba(23, 162, 184, 0.2); color: var(--info); }
+        .status-in-progress { background-color: rgba(255, 193, 7, 0.2); color: var(--warning); }
+        .status-completed { background-color: rgba(40, 167, 69, 0.2); color: var(--success); }
+        .status-on-hold { background-color: rgba(108, 117, 125, 0.2); color: var(--text-secondary); }
 
         /* Forms & Controls */
         .form-group {
@@ -565,7 +560,7 @@
         .form-control {
             width: 100%;
             padding: 0.75rem;
-            background-color: var(--bg-primary-start);
+            background-color: var(--bg-tertiary);
             border: 1px solid var(--border-color);
             border-radius: 8px;
             color: var(--text-primary);
@@ -574,11 +569,11 @@
         .form-control:focus {
             outline: none;
             border-color: var(--accent-primary-start);
-            box-shadow: 0 0 0 3px rgba(88, 166, 255, 0.3);
+            box-shadow: 0 0 0 3px rgba(0, 82, 212, 0.2);
         }
         select.form-control {
             appearance: none;
-            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23adb5bd' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3e%3c/svg%3e");
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%236C757D' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3e%3c/svg%3e");
             background-repeat: no-repeat;
             background-position: right 0.75rem center;
             background-size: 16px 12px;
@@ -600,7 +595,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background-color: rgba(0, 0, 0, 0.7);
+            background-color: rgba(0, 0, 0, 0.5);
             display: flex;
             justify-content: center;
             align-items: center;
@@ -614,7 +609,6 @@
         }
         .modal-content {
             background-color: var(--bg-secondary);
-            backdrop-filter: blur(20px);
             padding: 2rem;
             border-radius: 12px;
             width: 90%;
@@ -711,8 +705,7 @@
             gap: 1.5rem;
         }
         .team-card {
-            background: linear-gradient(145deg, rgba(255,255,255,0.05), rgba(255,255,255,0));
-            backdrop-filter: blur(20px);
+            background: var(--bg-secondary);
             padding: 1.5rem;
             border-radius: 12px;
             border: 1px solid var(--border-color);
@@ -837,7 +830,6 @@
                 right: 0;
                 height: 65px;
                 background-color: var(--bg-secondary);
-                backdrop-filter: blur(20px);
                 border-top: 1px solid var(--border-color);
                 display: flex;
                 justify-content: space-around;
@@ -872,6 +864,24 @@
                 width: 95%;
                 padding: 1.5rem;
                 max-width: 95%;
+            }
+        }
+        
+        @media print {
+            body * {
+                visibility: hidden;
+            }
+            #report-content, #report-content * {
+                visibility: visible;
+            }
+            #report-content {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+            }
+            .report-header h3, .report-header p {
+                color: #000 !important;
             }
         }
     </style>
@@ -994,12 +1004,12 @@
         // --- Module: Local Data Service ---
         App.dataService = (() => {
             const SEED_DATA_SOURCE = [
-                { id: "proj1", name: "InnovateX Platform", client: "Tech Solutions Inc.", projectLead: "Alice Johnson", totalContractValue: 150000, status: "in-progress", startDate: "2025-05-12", endDate: "2025-11-08", paymentFrequency: "monthly", createdAt: new Date(new Date().setDate(new Date().getDate() - 90)), expenses: [ { description: "Cloud Hosting (Q1)", amount: 3000, type: "direct", date: new Date(new Date().setDate(new Date().getDate() - 85)) }, { description: "UX/UI Design Services", amount: 12000, type: "outsourced", date: new Date(new Date().setDate(new Date().getDate() - 80)) }, { description: "Software Licenses", amount: 1500, type: "direct", date: new Date(new Date().setDate(new Date().getDate() - 70)) }, { description: "Cloud Hosting (Q2)", amount: 3000, type: "direct", date: new Date(new Date().setDate(new Date().getDate() - 10)) }, ], revenuePayments: [ { description: "Initial Deposit", amount: 30000, date: new Date(new Date().setDate(new Date().getDate() - 88)) }, { description: "Milestone 1 Payment", amount: 45000, date: new Date(new Date().setDate(new Date().getDate() - 55)) }, { description: "Milestone 2 Payment", amount: 45000, date: new Date(new Date().setDate(new Date().getDate() - 20)) }, ] },
-                { id: "proj2", name: "E-Commerce Overhaul", client: "Global Retail Co.", projectLead: "Bob Williams", totalContractValue: 220000, status: "completed", startDate: "2025-02-11", endDate: "2025-07-11", paymentFrequency: "milestone", createdAt: new Date(new Date().setDate(new Date().getDate() - 180)), expenses: [ { description: "Development Team (Internal)", amount: 60000, type: "direct", date: new Date(new Date().setDate(new Date().getDate() - 170)) }, { description: "Payment Gateway Integration", amount: 7500, type: "outsourced", date: new Date(new Date().setDate(new Date().getDate() - 150)) }, { description: "QA Testing Services", amount: 15000, type: "outsourced", date: new Date(new Date().setDate(new Date().getDate() - 100)) }, { description: "Final Deployment Support", amount: 5000, type: "direct", date: new Date(new Date().setDate(new Date().getDate() - 35)) }, ], revenuePayments: [ { description: "Phase 1", amount: 75000, date: new Date(new Date().setDate(new Date().getDate() - 160)) }, { description: "Phase 2", amount: 75000, date: new Date(new Date().setDate(new Date().getDate() - 110)) }, { description: "Final Payment", amount: 70000, date: new Date(new Date().setDate(new Date().getDate() - 30)) }, ] },
-                { id: "proj3", name: "Data Analytics Dashboard", client: "HealthFirst Corp", projectLead: "Alice Johnson", totalContractValue: 85000, status: "in-progress", startDate: "2025-06-11", endDate: "2025-12-08", paymentFrequency: "quarterly", createdAt: new Date(new Date().setDate(new Date().getDate() - 60)), expenses: [ { description: "Data Scientist (Contractor)", amount: 18000, type: "outsourced", date: new Date(new Date().setDate(new Date().getDate() - 50)) }, { description: "Data Visualization Software", amount: 4000, type: "direct", date: new Date(new Date().setDate(new Date().getDate() - 45)) }, ], revenuePayments: [ { description: "Q1 Payment", amount: 42500, date: new Date(new Date().setDate(new Date().getDate() - 58)) }, ] },
-                { id: "proj4", name: "Mobile App Development", client: "Startup Hub", projectLead: "Charlie Brown", totalContractValue: 75000, status: "planning", startDate: "2025-08-25", endDate: "2025-11-23", paymentFrequency: "monthly", createdAt: new Date(new Date().setDate(new Date().getDate() - 15)), expenses: [ { description: "Market Research", amount: 2500, type: "direct", date: new Date(new Date().setDate(new Date().getDate() - 10)) }, ], revenuePayments: [ { description: "Initial Retainer", amount: 15000, date: new Date(new Date().setDate(new Date().getDate() - 12)) }, ] },
-                { id: "proj5", name: "Cloud Migration", client: "Legacy Systems Ltd.", projectLead: "Bob Williams", totalContractValue: 120000, status: "on-hold", startDate: "2025-04-12", endDate: "2025-09-09", paymentFrequency: "milestone", createdAt: new Date(new Date().setDate(new Date().getDate() - 120)), expenses: [ { description: "Infrastructure Audit", amount: 8000, type: "direct", date: new Date(new Date().setDate(new Date().getDate() - 115)) }, ], revenuePayments: [ { description: "Discovery Phase Payment", amount: 25000, date: new Date(new Date().setDate(new Date().getDate() - 118)) }, ] },
-                { id: "proj6", name: "Project Phoenix", client: "Omni Consumer Products", projectLead: "Diana Prince", totalContractValue: 500000, status: "in-progress", startDate: "2024-12-03", endDate: "2025-12-03", paymentFrequency: "monthly", createdAt: new Date(new Date().setDate(new Date().getDate() - 250)), expenses: [ { description: "R&D Team Salaries", amount: 150000, type: "direct", date: new Date(new Date().setDate(new Date().getDate() - 240)) }, { description: "Specialized Hardware", amount: 75000, type: "direct", date: new Date(new Date().setDate(new Date().getDate() - 230)) }, { description: "External Security Consultants", amount: 45000, type: "outsourced", date: new Date(new Date().setDate(new Date().getDate() - 200)) }, { description: "Operational Costs (Y1)", amount: 25000, type: "direct", date: new Date(new Date().setDate(new Date().getDate() - 150)) }, ], revenuePayments: [ { description: "Seed Funding", amount: 250000, date: new Date(new Date().setDate(new Date().getDate() - 245)) }, { description: "Milestone Alpha", amount: 125000, date: new Date(new Date().setDate(new Date().getDate() - 180)) }, ] },
+                { id: "proj1", name: "InnovateX Platform", client: "Tech Solutions Inc.", projectLead: "Alice Johnson", totalContractValue: 150000, status: "in-progress", startDate: "2025-05-12", endDate: "2025-11-08", paymentFrequency: "monthly", createdAt: new Date(new Date().setDate(new Date().getDate() - 90)), expenses: [ { description: "Cloud Hosting (Q1)", amount: 3000, type: "direct", date: new Date(new Date().setDate(new Date().getDate() - 85)) }, { description: "UX/UI Design Services", amount: 12000, type: "outsourced", date: new Date(new Date().setDate(new Date().getDate() - 80)) }, { description: "Software Licenses", amount: 1500, type: "direct", date: new Date(new Date().setDate(new Date().getDate() - 70)) }, { description: "Cloud Hosting (Q2)", amount: 3000, type: "direct", date: new Date(new Date().setDate(new Date().getDate() - 10)) }, ], revenuePayments: [ { description: "Initial Deposit", amount: 30000, date: new Date(new Date().setDate(new Date().getDate() - 88)) }, { description: "Milestone 1 Payment", amount: 45000, date: new Date(new Date().setDate(new Date().getDate() - 55)) }, { description: "Milestone 2 Payment", amount: 45000, date: new Date(new Date().setDate(new Date().getDate() - 20)) }, ], partners: [ { id: 'partner1', name: 'Design Wizards LLC', role: 'UX/UI Design', cost: 12000 } ] },
+                { id: "proj2", name: "E-Commerce Overhaul", client: "Global Retail Co.", projectLead: "Bob Williams", totalContractValue: 220000, status: "completed", startDate: "2025-02-11", endDate: "2025-07-11", paymentFrequency: "milestone", createdAt: new Date(new Date().setDate(new Date().getDate() - 180)), expenses: [ { description: "Development Team (Internal)", amount: 60000, type: "direct", date: new Date(new Date().setDate(new Date().getDate() - 170)) }, { description: "Payment Gateway Integration", amount: 7500, type: "outsourced", date: new Date(new Date().setDate(new Date().getDate() - 150)) }, { description: "QA Testing Services", amount: 15000, type: "outsourced", date: new Date(new Date().setDate(new Date().getDate() - 100)) }, { description: "Final Deployment Support", amount: 5000, type: "direct", date: new Date(new Date().setDate(new Date().getDate() - 35)) }, ], revenuePayments: [ { description: "Phase 1", amount: 75000, date: new Date(new Date().setDate(new Date().getDate() - 160)) }, { description: "Phase 2", amount: 75000, date: new Date(new Date().setDate(new Date().getDate() - 110)) }, { description: "Final Payment", amount: 70000, date: new Date(new Date().setDate(new Date().getDate() - 30)) }, ], partners: [] },
+                { id: "proj3", name: "Data Analytics Dashboard", client: "HealthFirst Corp", projectLead: "Alice Johnson", totalContractValue: 85000, status: "in-progress", startDate: "2025-06-11", endDate: "2025-12-08", paymentFrequency: "quarterly", createdAt: new Date(new Date().setDate(new Date().getDate() - 60)), expenses: [ { description: "Data Scientist (Contractor)", amount: 18000, type: "outsourced", date: new Date(new Date().setDate(new Date().getDate() - 50)) }, { description: "Data Visualization Software", amount: 4000, type: "direct", date: new Date(new Date().setDate(new Date().getDate() - 45)) }, ], revenuePayments: [ { description: "Q1 Payment", amount: 42500, date: new Date(new Date().setDate(new Date().getDate() - 58)) }, ], partners: [] },
+                { id: "proj4", name: "Mobile App Development", client: "Startup Hub", projectLead: "Charlie Brown", totalContractValue: 75000, status: "planning", startDate: "2025-08-25", endDate: "2025-11-23", paymentFrequency: "monthly", createdAt: new Date(new Date().setDate(new Date().getDate() - 15)), expenses: [ { description: "Market Research", amount: 2500, type: "direct", date: new Date(new Date().setDate(new Date().getDate() - 10)) }, ], revenuePayments: [ { description: "Initial Retainer", amount: 15000, date: new Date(new Date().setDate(new Date().getDate() - 12)) }, ], partners: [] },
+                { id: "proj5", name: "Cloud Migration", client: "Legacy Systems Ltd.", projectLead: "Bob Williams", totalContractValue: 120000, status: "on-hold", startDate: "2025-04-12", endDate: "2025-09-09", paymentFrequency: "milestone", createdAt: new Date(new Date().setDate(new Date().getDate() - 120)), expenses: [ { description: "Infrastructure Audit", amount: 8000, type: "direct", date: new Date(new Date().setDate(new Date().getDate() - 115)) }, ], revenuePayments: [ { description: "Discovery Phase Payment", amount: 25000, date: new Date(new Date().setDate(new Date().getDate() - 118)) }, ], partners: [] },
+                { id: "proj6", name: "Project Phoenix", client: "Omni Consumer Products", projectLead: "Diana Prince", totalContractValue: 500000, status: "in-progress", startDate: "2024-12-03", endDate: "2025-12-03", paymentFrequency: "monthly", createdAt: new Date(new Date().setDate(new Date().getDate() - 250)), expenses: [ { description: "R&D Team Salaries", amount: 150000, type: "direct", date: new Date(new Date().setDate(new Date().getDate() - 240)) }, { description: "Specialized Hardware", amount: 75000, type: "direct", date: new Date(new Date().setDate(new Date().getDate() - 230)) }, { description: "External Security Consultants", amount: 45000, type: "outsourced", date: new Date(new Date().setDate(new Date().getDate() - 200)) }, { description: "Operational Costs (Y1)", amount: 25000, type: "direct", date: new Date(new Date().setDate(new Date().getDate() - 150)) }, ], revenuePayments: [ { description: "Seed Funding", amount: 250000, date: new Date(new Date().setDate(new Date().getDate() - 245)) }, { description: "Milestone Alpha", amount: 125000, date: new Date(new Date().setDate(new Date().getDate() - 180)) }, ], partners: [] },
             ];
 
             let localProjects = JSON.parse(JSON.stringify(SEED_DATA_SOURCE));
@@ -1013,7 +1023,8 @@
                     ...p,
                     createdAt: new Date(p.createdAt),
                     expenses: (p.expenses || []).map(e => ({...e, date: new Date(e.date)})),
-                    revenuePayments: (p.revenuePayments || []).map(r => ({...r, date: new Date(r.date)}))
+                    revenuePayments: (p.revenuePayments || []).map(r => ({...r, date: new Date(r.date)})),
+                    partners: p.partners || []
                 }));
                 return projectsWithDates.sort((a, b) => b.createdAt - a.createdAt);
             };
@@ -1024,7 +1035,8 @@
                     id: `proj${Date.now()}`,
                     createdAt: new Date().toISOString(),
                     expenses: [],
-                    revenuePayments: []
+                    revenuePayments: [],
+                    partners: []
                 };
                 localProjects.unshift(newProject);
                 notifyDataChange();
@@ -1037,7 +1049,8 @@
                     createdAt: new Date().toISOString(),
                     // Ensure expenses/revenue are arrays even if not provided
                     expenses: projectData.expenses || [],
-                    revenuePayments: projectData.revenuePayments || []
+                    revenuePayments: projectData.revenuePayments || [],
+                    partners: projectData.partners || []
                 }));
                 // Add new projects to the beginning of the list
                 localProjects.unshift(...newProjects);
@@ -1188,12 +1201,12 @@
                 const isLightMode = document.body.classList.contains('light-mode');
                 return {
                     background: isLightMode ? '#ffffff' : '#161B22',
-                    text: isLightMode ? '#1f2328' : '#e6edf3',
-                    border: isLightMode ? 'rgba(31, 35, 40, 0.15)' : 'rgba(240, 246, 252, 0.1)',
-                    success: isLightMode ? '#1a7f37' : '#3FB950',
-                    danger: isLightMode ? '#cf222e' : '#F85149',
-                    warning: isLightMode ? '#9a6700' : '#D29922',
-                    info: isLightMode ? '#0969da' : '#58a6ff',
+                    text: isLightMode ? '#212529' : '#e6edf3',
+                    border: isLightMode ? '#DEE2E6' : 'rgba(240, 246, 252, 0.1)',
+                    success: isLightMode ? '#28A745' : '#3FB950',
+                    danger: isLightMode ? '#DC3545' : '#F85149',
+                    warning: isLightMode ? '#FFC107' : '#D29922',
+                    info: isLightMode ? '#17A2B8' : '#58a6ff',
                 };
             }
 
@@ -1573,6 +1586,22 @@
                     </form>
                 </div>
             `;
+            
+            const getReportModalHTML = (title, content) => `
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h3>${title}</h3>
+                        <button class="close-modal-btn"><i data-lucide="x"></i></button>
+                    </div>
+                    <div class="modal-body" id="report-content-wrapper">
+                        ${content}
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary close-modal-btn">Close</button>
+                        <button type="button" id="print-report-btn" class="btn btn-primary"><i data-lucide="printer"></i> Print Report</button>
+                    </div>
+                </div>
+            `;
 
             const getProjectDetailsModalHTML = (project) => {
                 const today = new Date().toISOString().split('T')[0];
@@ -1667,14 +1696,60 @@
 
                         <!-- Partners Tab -->
                         <div id="tab-partners" class="tab-content">
-                            <p>Functionality for managing project partners and outsourced teams would be implemented here.</p>
+                            <div class="sub-section">
+                                <h4>Add Partner</h4>
+                                <form id="add-partner-form" style="display: grid; grid-template-columns: repeat(1, 1fr); gap: 1rem; align-items: flex-end;">
+                                    <div class="form-group" style="grid-column: 1 / -1;">
+                                        <label>Partner Name</label>
+                                        <input type="text" name="name" class="form-control" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Role / Service Provided</label>
+                                        <input type="text" name="role" class="form-control" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Associated Cost</label>
+                                        <input type="number" name="cost" class="form-control" required min="0" step="100">
+                                    </div>
+                                    <div class="form-group" style="grid-column: 1 / -1;">
+                                        <button type="submit" class="btn btn-success">Add Partner</button>
+                                    </div>
+                                </form>
+                            </div>
+                            <div class="sub-section">
+                                <h4>Project Partners</h4>
+                                <div class="table-container">
+                                    <table id="partners-details-table" class="custom-table">
+                                        <thead><tr><th>Name</th><th>Role</th><th style="text-align:right;">Cost</th><th></th></tr></thead>
+                                        <tbody>${(project.partners || []).map((p, i) => createPartnerTableRow(p, i)).join('')}</tbody>
+                                    </table>
+                                </div>
+                            </div>
                         </div>
                         
                         <!-- Settings Tab -->
                         <div id="tab-settings" class="tab-content">
                             <div class="sub-section">
                                 <h4>Project Settings</h4>
-                                <p>Edit core project details here.</p>
+                                <form id="edit-project-form">
+                                    <div class="form-group">
+                                        <label for="editProjectName">Project Name</label>
+                                        <input type="text" id="editProjectName" class="form-control" value="${project.name}" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="editClientName">Client Name</label>
+                                        <input type="text" id="editClientName" class="form-control" value="${project.client}" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="editProjectLead">Project Lead</label>
+                                        <input type="text" id="editProjectLead" class="form-control" value="${project.projectLead}" required>
+                                    </div>
+                                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                                </form>
+                            </div>
+                             <div class="sub-section">
+                                <h4>Danger Zone</h4>
+                                <p>This action is irreversible. Please be certain before proceeding.</p>
                                 <button id="delete-project-btn" class="btn btn-danger" style="margin-top: 1rem;">Delete Project</button>
                             </div>
                         </div>
@@ -1686,6 +1761,15 @@
                 </div>
                 `;
             };
+            
+            const createPartnerTableRow = (partner, index) => `
+                <tr>
+                    <td>${partner.name}</td>
+                    <td>${partner.role}</td>
+                    <td style="text-align:right;">${formatCurrency(partner.cost)}</td>
+                    <td><button class="delete-sub-item-btn" data-type="partner" data-index="${index}"><i data-lucide="trash-2" style="width: 1rem; height: 1rem; color: var(--danger);"></i></button></td>
+                </tr>
+            `;
 
             const createSubTableRow = (item, index, type) => `
                 <tr>
@@ -1693,14 +1777,14 @@
                     <td>${item.description}</td>
                     ${type === 'expense' ? `<td><span class="status-badge status-${item.type === 'direct' ? 'planning' : 'in-progress'}">${item.type}</span></td>` : ''}
                     <td style="text-align:right;">${formatCurrency(item.amount)}</td>
-                    <td><button class="delete-sub-item-btn" data-index="${index}"><i data-lucide="trash-2" style="width: 1rem; height: 1rem; color: var(--danger);"></i></button></td>
+                    <td><button class="delete-sub-item-btn" data-type="${type}" data-index="${index}"><i data-lucide="trash-2" style="width: 1rem; height: 1rem; color: var(--danger);"></i></button></td>
                 </tr>
             `;
 
             return {
                 getDashboardHTML, getPortfolioHTML, getRevenueHTML, getExpensesHTML, getProfitHTML, getTrendsHTML, getTeamHTML, getReportsHTML,
                 createKpiCard, createRecentProjectRow, createPortfolioTableRow, createRevenueDetailRow, createExpenseDetailRow, createProfitDetailRow, createEnhancedTeamMemberCard,
-                getAddProjectModalHTML, getProjectDetailsModalHTML, createSubTableRow
+                getAddProjectModalHTML, getProjectDetailsModalHTML, createSubTableRow, createPartnerTableRow, getReportModalHTML
             };
         })();
         
@@ -1776,7 +1860,7 @@
 
         // --- Module: Modal Component ---
         App.modal = (() => {
-            const { getAddProjectModalHTML, getProjectDetailsModalHTML } = App.templates;
+            const { getAddProjectModalHTML, getProjectDetailsModalHTML, getReportModalHTML } = App.templates;
             const { addProject, updateProject, deleteProject } = App.dataService;
             const modalContainer = document.getElementById('modal-container');
 
@@ -1826,6 +1910,19 @@
                 setupDetailsModalEventListeners(project);
             }
             
+            function showReportModal(title, content) {
+                showModal(getReportModalHTML(title, content));
+                document.getElementById('print-report-btn').addEventListener('click', () => {
+                     const reportContent = document.getElementById('report-content-wrapper').innerHTML;
+                     const originalContent = document.body.innerHTML;
+                     document.body.innerHTML = reportContent;
+                     window.print();
+                     document.body.innerHTML = originalContent;
+                     // We need to re-initialize the app after printing to restore event listeners
+                     initializeApp();
+                });
+            }
+            
             function setupDetailsModalEventListeners(project) {
                 document.querySelector('.modal-tabs').addEventListener('click', (e) => {
                     const tabLink = e.target.closest('.tab-link');
@@ -1838,9 +1935,40 @@
 
                 document.getElementById('add-revenue-form').addEventListener('submit', (e) => handleAddSubItem(e, project, 'revenuePayments'));
                 document.getElementById('add-expense-form').addEventListener('submit', (e) => handleAddSubItem(e, project, 'expenses'));
+                document.getElementById('add-partner-form').addEventListener('submit', (e) => handleAddPartner(e, project));
+                document.getElementById('edit-project-form').addEventListener('submit', (e) => handleEditProject(e, project));
+
                 document.getElementById('revenue-details-table').addEventListener('click', (e) => handleDeleteSubItem(e, project, 'revenuePayments'));
                 document.getElementById('expenses-details-table').addEventListener('click', (e) => handleDeleteSubItem(e, project, 'expenses'));
+                document.getElementById('partners-details-table').addEventListener('click', (e) => handleDeleteSubItem(e, project, 'partners'));
+                
                 document.getElementById('delete-project-btn').addEventListener('click', () => handleDeleteProject(project));
+            }
+            
+            function handleEditProject(e, project) {
+                e.preventDefault();
+                const form = e.target;
+                const updatedData = {
+                    name: form.editProjectName.value,
+                    client: form.editClientName.value,
+                    projectLead: form.editProjectLead.value
+                };
+                updateProject(project.id, updatedData);
+                App.notify.show('Project details updated successfully!', 'success');
+                closeModal();
+            }
+
+            function handleAddPartner(e, project) {
+                e.preventDefault();
+                const form = e.target;
+                const newPartner = {
+                    id: `partner${Date.now()}`,
+                    name: form.name.value,
+                    role: form.role.value,
+                    cost: parseFloat(form.cost.value)
+                };
+                const updatedPartners = [...(project.partners || []), newPartner];
+                updateProject(project.id, { partners: updatedPartners });
             }
 
             function handleAddSubItem(e, project, type) {
@@ -1858,21 +1986,20 @@
                 const deleteBtn = e.target.closest('.delete-sub-item-btn');
                 if (!deleteBtn) return;
                 const index = parseInt(deleteBtn.dataset.index, 10);
-                const customConfirm = window.confirm('Are you sure you want to delete this item?');
-                if (isNaN(index) || !customConfirm) return;
+                if (isNaN(index) || !window.confirm('Are you sure you want to delete this item?')) return;
+                
                 const updatedItems = project[type].filter((_, i) => i !== index);
                 updateProject(project.id, { [type]: updatedItems });
             }
 
             function handleDeleteProject(project) {
-                 const customConfirm = window.confirm(`Are you sure you want to permanently delete the project "${project.name}"? This action cannot be undone.`);
-                if (customConfirm) {
+                if (window.confirm(`Are you sure you want to permanently delete the project "${project.name}"? This action cannot be undone.`)) {
                     deleteProject(project.id);
                     closeModal();
                 }
             }
 
-            return { initModal, showProjectDetailsModal };
+            return { initModal, showProjectDetailsModal, showReportModal };
         })();
         
         // --- Module: Export Service ---
@@ -2225,6 +2352,120 @@
             return { render };
         })();
         
+        App.reports = (() => {
+            const { showReportModal } = App.modal;
+            const { getProjects } = App.dataService;
+            const { calculateProjectMetrics } = App.calculations;
+            const { formatCurrency, formatDate } = App.helpers;
+
+            function generate(reportType, projectId) {
+                const projects = getProjects();
+                let title = '';
+                let content = '';
+
+                switch (reportType) {
+                    case 'project_summary':
+                        const project = projects.find(p => p.id === projectId);
+                        if (project) {
+                            title = `Project Summary: ${project.name}`;
+                            content = generateProjectSummary(project);
+                        } else {
+                            App.notify.show('Could not find the selected project.', 'danger');
+                            return;
+                        }
+                        break;
+                    case 'full_expense':
+                        title = 'Full Expense Report';
+                        content = generateFullExpenseReport(projects);
+                        break;
+                    case 'full_revenue_profit':
+                        title = 'Full Revenue & Profit Report';
+                        content = generateFullRevenueProfitReport(projects);
+                        break;
+                }
+                
+                showReportModal(title, content);
+            }
+
+            function generateProjectSummary(project) {
+                const metrics = calculateProjectMetrics(project);
+                return `
+                    <div id="report-content">
+                        <div class="report-header" style="margin-bottom: 2rem; border-bottom: 1px solid var(--border-color); padding-bottom: 1rem;">
+                            <h3>${project.name}</h3>
+                            <p><strong>Client:</strong> ${project.client}</p>
+                            <p><strong>Project Lead:</strong> ${project.projectLead}</p>
+                            <p><strong>Duration:</strong> ${formatDate(project.startDate)} - ${formatDate(project.endDate)}</p>
+                        </div>
+                        <h4>Financial Overview</h4>
+                        <table class="custom-table">
+                            <tbody>
+                                <tr><td>Total Contract Value</td><td style="text-align:right;">${formatCurrency(project.totalContractValue)}</td></tr>
+                                <tr><td>Total Revenue Received</td><td style="text-align:right;">${formatCurrency(metrics.totalRevenue)}</td></tr>
+                                <tr><td>Total Expenses</td><td style="text-align:right;">${formatCurrency(metrics.totalExpenses)}</td></tr>
+                                <tr style="font-weight: bold;"><td>Net Profit</td><td style="text-align:right;">${formatCurrency(metrics.netProfit)}</td></tr>
+                                <tr><td>Profit Margin</td><td style="text-align:right;">${metrics.profitMargin.toFixed(2)}%</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+            }
+
+            function generateFullExpenseReport(projects) {
+                 const allExpenses = projects.flatMap(p => p.expenses.map(e => ({...e, projectName: p.name}))).sort((a,b) => new Date(b.date) - new Date(a.date));
+                 return `
+                    <div id="report-content">
+                         <div class="report-header" style="margin-bottom: 2rem; border-bottom: 1px solid var(--border-color); padding-bottom: 1rem;">
+                            <h3>Full Expense Report</h3>
+                            <p>Generated on: ${formatDate(new Date())}</p>
+                        </div>
+                        <table class="custom-table">
+                            <thead><tr><th>Date</th><th>Project</th><th>Description</th><th>Type</th><th style="text-align:right;">Amount</th></tr></thead>
+                            <tbody>
+                                ${allExpenses.map(e => `
+                                    <tr>
+                                        <td>${formatDate(e.date)}</td>
+                                        <td>${e.projectName}</td>
+                                        <td>${e.description}</td>
+                                        <td>${e.type}</td>
+                                        <td style="text-align:right;">${formatCurrency(e.amount)}</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                 `;
+            }
+            
+            function generateFullRevenueProfitReport(projects) {
+                const projectsWithMetrics = projects.map(p => ({...p, metrics: calculateProjectMetrics(p)}));
+                return `
+                     <div id="report-content">
+                        <div class="report-header" style="margin-bottom: 2rem; border-bottom: 1px solid var(--border-color); padding-bottom: 1rem;">
+                            <h3>Full Revenue & Profit Report</h3>
+                            <p>Generated on: ${formatDate(new Date())}</p>
+                        </div>
+                        <table class="custom-table">
+                            <thead><tr><th>Project</th><th>Total Revenue</th><th>Total Costs</th><th>Net Profit</th><th>Margin</th></tr></thead>
+                            <tbody>
+                                ${projectsWithMetrics.map(p => `
+                                    <tr>
+                                        <td>${p.name}</td>
+                                        <td style="text-align:right;">${formatCurrency(p.metrics.totalRevenue)}</td>
+                                        <td style="text-align:right;">${formatCurrency(p.metrics.totalExpenses)}</td>
+                                        <td style="text-align:right; font-weight: bold;">${formatCurrency(p.metrics.netProfit)}</td>
+                                        <td style="text-align:right;">${p.metrics.profitMargin.toFixed(2)}%</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+            }
+
+            return { generate };
+        })();
+        
         App.pages.reports = (() => {
             const { getReportsHTML } = App.templates;
 
@@ -2241,13 +2482,10 @@
                 });
 
                 generateBtn.addEventListener('click', () => {
-                    const reportType = reportTypeSelect.options[reportTypeSelect.selectedIndex].text;
-                    let message = `Generating "${reportType}"...`;
-                    if (reportTypeSelect.value === 'project_summary') {
-                        const projectSelect = document.getElementById('project-select');
-                        message += `\nFor project: ${projectSelect.options[projectSelect.selectedIndex].text}`;
-                    }
-                    alert(message + "\n\n(Report generation logic would be implemented here.)");
+                    const reportType = reportTypeSelect.value;
+                    const projectSelect = document.getElementById('project-select');
+                    const projectId = projectSelect.value;
+                    App.reports.generate(reportType, projectId);
                 });
             }
             return { render };
@@ -2325,10 +2563,9 @@
             
             return { initRouter, navigateTo };
         })();
-
-        // --- Main Application Entry Point ---
-        document.addEventListener('DOMContentLoaded', () => {
-            console.log("BITS App Initializing (Local Version)...");
+        
+        function initializeApp() {
+             console.log("BITS App Initializing (Local Version)...");
             const loadingOverlay = document.getElementById('loading-overlay');
             
             // Initialize UI that doesn't depend on data
@@ -2370,10 +2607,13 @@
 
             // Hide loading overlay
             setTimeout(() => {
-                loadingOverlay.classList.add('hidden');
+                if(loadingOverlay) loadingOverlay.classList.add('hidden');
                 console.log("BITS App Ready!");
             }, 250); // Small delay to ensure first paint
-        });
+        }
+
+        // --- Main Application Entry Point ---
+        document.addEventListener('DOMContentLoaded', initializeApp);
     </script>
 </body>
 </html>
